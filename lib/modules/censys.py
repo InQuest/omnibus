@@ -6,11 +6,11 @@
 import censys.ipv4
 
 from common import is_ipv4
-from common import get_apikeys
+from common import get_apikey
 
 
 def run(domain):
-    key = get_apikeys('censys')
+    key = get_apikey('censys')
 
     if is_ipv4(domain):
         censysio = censys.ipv4.CensysIPv4(api_id=key['token'], api_secret=key['secret'])
