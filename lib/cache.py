@@ -24,7 +24,7 @@ class Cache(DefaultMapping):
         if getsizeof:
             self.__getsizeof = getsizeof
             self.__size = dict()
-        self.__data = dict()
+        self.data = dict()
         self.__currsize = 0
         self.__maxsize = maxsize
 
@@ -33,7 +33,7 @@ class Cache(DefaultMapping):
         """Return name, iems, maxsize and current size"""
         return '%s(%r, maxsize=%r, currsize=%r)' % (
             self.__class__.__name__,
-            list(self.__data.items()),
+            list(self.data.items()),
             self.__maxsize,
             self.__currsize,
         )
@@ -42,7 +42,7 @@ class Cache(DefaultMapping):
     def __getitem__(self, key):
         """Get item by key"""
         try:
-            return self.__data[key]
+            return self.data[key]
         except KeyError:
             return self.__missing__(key)
 
@@ -53,14 +53,14 @@ class Cache(DefaultMapping):
         size = self.getsizeof(value)
         if size > maxsize:
             raise ValueError('value too large')
-        if key not in self.__data or self.__size[key] < size:
+        if key not in self.data or self.__size[key] < size:
             while self.__currsize + size > maxsize:
                 self.popitem()
-        if key in self.__data:
+        if key in self.data:
             diffsize = size - self.__size[key]
         else:
             diffsize = size
-        self.__data[key] = value
+        self.data[key] = value
         self.__size[key] = size
         self.__currsize += diffsize
 
@@ -68,13 +68,13 @@ class Cache(DefaultMapping):
     def __delitem__(self, key):
         """Remove item by key"""
         size = self.__size.pop(key)
-        del self.__data[key]
+        del self.data[key]
         self.__currsize -= size
 
 
     def __contains__(self, key):
         """Check if cache contains item by key"""
-        return key in self.__data
+        return key in self.data
 
 
     def __missing__(self, key):
@@ -89,12 +89,13 @@ class Cache(DefaultMapping):
 
     def __iter__(self):
         """Iterate over items"""
-        return iter(self.__data)
+        return iter(self.data)
 
 
+    @property
     def __len__(self):
         """Get number of items"""
-        return len(self.__data)
+        return len(self.data)
 
 
     @staticmethod

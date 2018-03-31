@@ -13,12 +13,17 @@ from requests.packages.urllib3 import exceptions
 
 jsondate = lambda obj: obj.isoformat() if isinstance(obj, datetime) else None
 
+# regex patterns courtesy of https://github.com/yolothreat/utilitybelt
 re_ipv4 = re.compile('(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)', re.I | re.S | re.M)
 re_ipv6 = re.compile('(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))', re.I | re.S | re.M)
 re_email = re.compile("\\b[A-Za-z0-9_.]+@[0-9a-z.-]+\\b", re.I | re.S | re.M)
 re_fqdn = re.compile('(?=^.{4,255}$)(^((?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.)+[a-zA-Z]{2,63}$)', re.I | re.S | re.M)
 re_cve = re.compile("(CVE-(19|20)\\d{2}-\\d{4,7})", re.I | re.S | re.M)
 re_url = re.compile("http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", re.I | re.S | re.M)
+re_md5 = re.compile("\\b[a-f0-9]{32}\\b", re.I | re.S | re.M)
+re_sha1 = re.compile("\\b[a-f0-9]{40}\\b", re.I | re.S | re.M)
+re_sha256 = re.compile("\\b[a-f0-9]{64}\\b", re.I | re.S | re.M)
+re_sha512 = re.compile("\\b[a-f0-9]{128}\\b", re.I | re.S | re.M)
 
 BOLD = "\033[1m"
 GREY = '\033[90m'
@@ -179,3 +184,16 @@ def is_url(url):
 
 def is_email(address):
     return bool(re.match(re_email, address))
+
+
+def is_hash(string):
+    if re.match(re_md5, string):
+        return 'md5'
+    elif re.match(re_sha1, string):
+        return 'sha1'
+    elif re.match(re_sha256, string):
+        return 'sha256'
+    elif re.match(re_sha512, string):
+        return 'sha512'
+    else:
+        return False

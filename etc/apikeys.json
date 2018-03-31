@@ -2,6 +2,7 @@
     "censys": {
         "token": "",
         "secret": ""},
+    "github": "",
     "shodan": "",
     "virustotal": ""
 }
