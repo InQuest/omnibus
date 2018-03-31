@@ -7,6 +7,7 @@
 from common import is_ipv4
 from common import is_ipv6
 from common import is_fqdn
+from common import is_hash
 
 from common import success
 from common import warning
@@ -24,6 +25,27 @@ class Email(object):
         self.data = {}
         self.notes = []
         self.name = email_address
+
+
+class Hash(object):
+    def __init__(self, hash, source=''):
+        self.name = hash
+        self.data = {}
+        self.type = None
+        self.notes = []
+        self.source = source
+
+        if self.type is None:
+            self._set_type()
+
+
+    def _set_type(self):
+        result = is_hash(self.name)
+        if result is None:
+            warning('hash is not a valid md5, sha1, sha256, or sha512')
+        else:
+            self.type = result
+            success('set artifact type: %s' % self.type)
 
 
 class Host(object):
