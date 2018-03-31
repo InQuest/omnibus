@@ -1,0 +1,5 @@
+pymongo==3.5.1
+cmd2==0.8.2
+censys==0.0.8
+BeautifulSoup==3.2.1
+dnspython==1.15.0
