@@ -1,0 +1,7 @@
+{
+    "censys": {
+        "token": "",
+        "secret": ""},
+    "shodan": "",
+    "virustotal": ""
+}
