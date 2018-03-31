@@ -20,6 +20,7 @@ from lib.common import is_ipv4
 from lib.common import is_ipv6
 from lib.common import is_fqdn
 from lib.common import is_email
+from lib.common import is_hash
 
 from lib.common import mkdir
 from lib.common import error
@@ -27,6 +28,7 @@ from lib.common import running
 from lib.common import success
 from lib.common import warning
 
+from lib.models import Hash
 from lib.models import Host
 from lib.models import User
 from lib.models import Email
@@ -50,6 +52,7 @@ class Console(cmd2.Cmd):
             completekey='tab',
             persistent_history_file='~/.omnibus_hist',
             persistent_history_length=500)
+
         self.allow_cli_args = True
         self.allow_redirection = True
         self.prompt = 'omnibus >> '
@@ -73,7 +76,7 @@ class Console(cmd2.Cmd):
 
 
     def check_type(self, _type):
-        valid_types = ['host', 'user', 'email']
+        valid_types = ['host', 'user', 'email', 'hash']
         if _type in valid_types:
             return True
         return False
@@ -115,9 +118,9 @@ class Console(cmd2.Cmd):
 
     def do_ls(self, arg):
         """View currently active artifacts: ls"""
-        running('Active Artifacts: %s' % self.session.__len__())
-        for idx, item in enumerate(self.session.__iter__()):
-            print('[%d] %s' % (idx, item))
+        running('Active Artifacts: %s' % self.session.__len__)
+        for key, value in self.session.data.iteritems():
+            print('[%s] %s' % (key, value))
 
 
     def do_find(self, arg):
@@ -128,6 +131,8 @@ class Console(cmd2.Cmd):
             res = self.db.find('host', {'name': arg}, one=True)
         elif is_email(arg):
             res = self.db.find('email', {'name': arg}, one=True)
+        elif is_hash(arg):
+            res = self.db.find('hash', {'name': arg}, one=True)
         else:
             res = self.db.find('user', {'name': arg}, one=True)
 
@@ -138,12 +143,19 @@ class Console(cmd2.Cmd):
     def do_wipe(self, arg):
         """Clear currently active artifacts: wipe"""
         running('Clearing active artifacts ...')
-        for idx, item in enumerate(self.session.__iter__):
-            self.session.__delitem__(idx)
+        for key in self.session.data.keys():
+            del self.session.data[key]
+        success('wiped all artifacts from cache')
 
 
     def do_rm(self, arg):
         """Remove active artifact by ID: rm <artifact id>"""
+        try:
+            arg = int(arg)
+        except:
+            error('artifact ID must be an integer')
+            return
+
         if self.session is not None:
             if self.session.__contains__(arg):
                 data = self.session.__getitem__(arg)
@@ -162,6 +174,8 @@ class Console(cmd2.Cmd):
             return 'host'
         elif is_email(arg):
             return 'email'
+        elif is_hash(arg):
+            return 'hash'
         else:
             return 'user'
 
@@ -171,11 +185,13 @@ class Console(cmd2.Cmd):
         _type = self.detect_type(arg)
 
         if _type == 'email':
-            item = Email(address=arg)
+            item = Email(email_address=arg)
         elif _type == 'host':
             item = Host(host=arg)
         elif _type == 'user':
             item = User(username=arg)
+        elif _type == 'hash':
+            item = Hash(hash=arg)
         else:
             warning('must specify one of type: email, host, user')
             return
@@ -185,22 +201,21 @@ class Console(cmd2.Cmd):
             if _id is not None:
                 success('indexed new artifact for analysis. Mongo ID: %s' % _id)
 
-        if self.session is not None:
+        if self.session is None:
             self.session = cache.Cache(maxsize=self.max_session_size)
             self.session.__setitem__(1, arg)
             success('Opened new session')
             print('Session ID: 1')
         else:
-            last_id = self.session.__len__
-            self.session.__setitem__(last_id + 1, arg)
-            print('Session ID: %s' % last_id + 1)
+            _id = self.session.__len__ + 1
+            self.session.data[_id] = arg
+            print('Session ID: %s' % _id)
 
 
     def do_delete(self, arg):
         """ Remove artifact from database by name: remove <name>"""
         _type = self.detect_type(arg)
         self.db.delete_one(_type, {'name': arg})
-        self.session.__delitem__()
 
 
     def do_cat(self, arg):
@@ -237,6 +252,12 @@ class Console(cmd2.Cmd):
                 if not self.db.exists('email', {'name': artifact}):
                     self.db.insert_one('email', a)
 
+            elif is_hash(artifact):
+                a = Hash(artifact)
+
+                if not self.db.exists('hash', {'name': artifact}):
+                    self.db.insert_one('hash', a)
+
             else:
                 warning('cannot determine type for artifact. treating as Username: %s' % artifact)
                 a = User(artifact)
@@ -249,24 +270,18 @@ class Console(cmd2.Cmd):
 
     def do_report(self, arg):
         """Save JSON report for artifact: report <host|email|user> <name>"""
-        parsed = self.parse_name_and_type(args)
-        if parsed is None:
-            return
-        _type, name = parsed[0], parsed[1]
+        _type = self.check_type(arg)
 
-        if self.check_type(_type):
-            result = self.db.find(_type, {'name': name}, one=True)
-            if len(result) == 0:
-                warning('no entry found for artifact: %s' % name)
-            else:
-                report = storage.JSON(result)
-                report.save()
-                if os.path.exists(report.file_path):
-                    success('Saved artifact report to: %s' % report.file_path)
-                else:
-                    error('Failed to properly save report :(')
+        result = self.db.find(_type, {'name': arg}, one=True)
+        if len(result) == 0:
+            warning('no entry found for artifact: %s' % arg)
         else:
-            warning('Must specify one of type: email, host, user')
+            report = storage.JSON(result)
+            report.save()
+            if os.path.exists(report.file_path):
+                success('Saved artifact report to: %s' % report.file_path)
+            else:
+                error('Failed to properly save report :(')
 
 
     def do_abusech(self, arg):
@@ -287,7 +302,7 @@ class Console(cmd2.Cmd):
             result = clearbit.run(arg)
             if result:
                 if self.db.exists('email', {'name': arg}):
-                    self.db.update_one('email', {'name': arg}, {'clearbit': result})
+                    self.db.update_one('email', {'name': arg}, {'data': {'clearbit': result}})
                     success('saved Clearbit results to db.')
                 print json.dumps(result, indent=2)
             else:
@@ -303,7 +318,7 @@ class Console(cmd2.Cmd):
         result = censys.run(arg)
         if result:
             if self.db.exists('host', {'name': arg}):
-                self.db.update_one('host', {'name': arg}, {'clearbit': result})
+                self.db.update_one('host', {'name': arg}, {'data': {'censys': result}})
                 success('saved Censys.io results to db.')
             print json.dumps(result, indent=2)
         else:
@@ -328,7 +343,7 @@ class Console(cmd2.Cmd):
 
         if result:
             if self.db.exists('host', {'name': arg}):
-                self.db.update_one('host', {'name': arg}, result)
+                self.db.update_one('host', {'name': arg}, {'data': {'DNS': result}})
                 success('saved WHOIS results to db.')
             print json.dumps(result, indent=2)
         else:
@@ -343,7 +358,7 @@ class Console(cmd2.Cmd):
 
         if result:
             if self.db.exists('host', {'name': arg}):
-                self.db.update_one('host', {'name': arg}, result)
+                self.db.update_one('host', {'name': arg}, {'data': {'geoip': result}})
                 success('saved geoIP results to db.')
             print json.dumps(result, indent=2)
         else:
@@ -367,17 +382,50 @@ class Console(cmd2.Cmd):
 
     def do_github(self, arg):
         """Check GitHub for active username"""
-        pass
+        from lib.modules import github
+
+        result = github.run(arg)
+        if result is not None:
+            if self.db.exists('user', {'name': arg}):
+                self.db.update_one('user', {'name': arg}, {'data': {'github': result}})
+                success('saved GitHub results to db.')
+            print json.dumps(result, indent=2)
+        else:
+            warning('failed to get GitHub results: %s' % arg)
 
 
     def do_hackedemails(self, arg):
         """Check hacked-emails.com for email address"""
-        pass
+        from lib.modules import hackedemails
+
+        if is_email(arg):
+            result = hackedemails.run(arg)
+            if result is not None:
+                if self.db.exists('email', {'name': arg}):
+                    self.db.update_one('email', {'name': arg}, {'data': {'hackedemails': result}})
+                    success('saved hacked-emails results to db.')
+                print json.dumps(result, indent=2)
+            else:
+                warning('failed to get hacked-emails results')
+        else:
+            error('must specify email address')
 
 
     def do_hibp(self, arg):
         """Check HaveIBeenPwned for email address"""
-        pass
+        from lib.modules import hibp
+
+        if is_email(arg):
+            result = hibp.run(arg)
+            if result is not None:
+                if self.db.exists('email', {'name': arg}):
+                    self.db.update_one('email', {'name': arg}, {'data': {'hibp': result}})
+                    success('saved HIBP results to db.')
+                print json.dumps(result, indent=2)
+            else:
+                warning('failed to get HIBP results')
+        else:
+            error('must specify email address')
 
 
     def do_ipinfo(self, arg):
@@ -398,7 +446,7 @@ class Console(cmd2.Cmd):
             result = sans.run(arg)
             if result is not None:
                 if self.db.exists('host', {'name': arg}):
-                    doc_id = self.db.update_one('host', {'name': arg}, {'isc': result})
+                    doc_id = self.db.update_one('host', {'name': arg}, {'data': {'isc': result}})
                     if doc_id is not None:
                         success('saved SANS ISC results:')
                 print json.dumps(result, indent=2)
@@ -432,7 +480,7 @@ class Console(cmd2.Cmd):
             result = nmap.run(arg)
             if len(result['ports']) > 0:
                 if self.db.exists('host', {'name': arg}):
-                    self.db.update_one('host', {'name': arg}, {'nmap': result})
+                    self.db.update_one('host', {'name': arg}, {'data': {'nmap': result}})
                     success('saved Nmap results to db.')
                 for item in result['ports']:
                     print item
@@ -488,6 +536,7 @@ class Console(cmd2.Cmd):
 
 
     def do_shodan(self, arg):
+        """Query Shodan for host"""
         from lib.modules import shodan
 
         if is_ipv4(arg) or is_ipv6(arg):
@@ -497,7 +546,7 @@ class Console(cmd2.Cmd):
 
         if result is not None:
             if self.db.exists('host', {'name': arg}):
-                self.db.update_one('host', {'name': arg}, result)
+                self.db.update_one('host', {'name': arg}, {'data': {'shodan': result}})
                 success('saved Shodan results to db.')
             print json.dumps(result, indent=2)
         else:
@@ -540,14 +589,18 @@ class Console(cmd2.Cmd):
         if is_fqdn(arg):
             result = virustotal.run_host(arg)
             if result is not None:
-                success('saved VirusTotal results:')
+                if self.db.exists('host', {'name': arg}):
+                    self.db.update_one('host', {'name': arg}, {'data': {'virustotal': result}})
+                    success('saved VirusTotal results to db.')
                 print json.dumps(result, indent=2)
             else:
                 warning('failed to get VirusTotal results: %s' % arg)
         elif is_ipv4(arg):
             result = virustotal.run_ip(arg)
             if result is not None:
-                success('saved VirusTotal results:')
+                if self.db.exists('host', {'name': arg}):
+                    self.db.update_one('host', {'name': arg}, {'data': {'virustotal': result}})
+                    success('saved VirusTotal results to db.')
                 print json.dumps(result, indent=2)
             else:
                 warning('failed to get VirusTotal results: %s' % arg)
@@ -572,7 +625,9 @@ class Console(cmd2.Cmd):
             result = whois.run(arg)
 
             if result is not None:
-                success('saved WHOIS result:')
+                if self.db.exists('host', {'name': arg}):
+                    self.db.update_one('host', {'name': arg}, {'data': {'whois': result}})
+                    success('saved WHOIS results to db.')
                 print json.dumps(result, indent=2)
             else:
                 warning('failed to get WHOIS results: %s' % arg)
