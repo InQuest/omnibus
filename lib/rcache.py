@@ -37,13 +37,15 @@ class RedisCache(object):
             self.ttl = int(self.ttl)
 
         try:
-            self.db = Redis(db=self.database, host=self.host, port=self.port, socket_timeout=5)
+            self.db = Redis(db=self.database, host=self.host,
+                port=self.port, socket_timeout=None)
         except:
             self.db = None
 
 
     def send(self, message, queue_name):
         """ Send a new message to a specific Redis queue """
+        message = utf_encode(message)
         try:
             self.db.lpush(queue_name, message)
         except Exception as err:
@@ -111,6 +113,7 @@ class RedisCache(object):
             except Exception as err:
                 error('[redis] failed to count queued messages (queues: %s) (error: %s)' % (str(queue)), str(err))
                 pass
+        return queue_dict
 
 
     def event_stream(self, queue_name):
