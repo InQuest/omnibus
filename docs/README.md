@@ -3,17 +3,17 @@ The OSINT Omnibus is meant to be a simple set of Python libraries to interact wi
 into your own Python project for custom usage or utilized through the built-in interactive command line application
 omnibus-cli.py
 
-- [Installation](#Installation)
-    * [Pre-requisites](#Pre-requisites)
-    * [MongoDB](#MongoDB)
-        + [Schema](#Schema)
-- [Modules](#Modules)
-- [Use as Library](#Library)
-- [Interactive CLI](#Interactive CLI)
-    * [Configuration](#Configuration)
-    * [Artifacts](#Artifacts)
-    * [Sessions](#Sessions)
-    * [Reports](#Reports)
+- [Installation](#installation)
+    * [Pre-requisites](#pre-requisites)
+    * [MongoDB](#mongodb)
+        + [Schema](#schema)
+- [Modules](#modules)
+- [Use as Library](#library)
+- [Interactive CLI](#interactive-cli)
+    * [Configuration](#configuration)
+    * [Artifacts](#artifacts)
+    * [Sessions](#sessions)
+    * [Reports](#reports)
 
 
 ## Installation
