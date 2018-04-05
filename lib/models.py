@@ -13,6 +13,13 @@ from common import success
 from common import warning
 
 
+class BitcoinAddress(object):
+    def __init__(self, addr, source=''):
+        self.data = {}
+        self.notes = []
+        self.name = addr
+
+
 class User(object):
     def __init__(self, username, source=''):
         self.data = {}
