@@ -195,19 +195,25 @@ def http_get(*args, **kwargs):
 
 def utf_decode(data):
     """ Decode UTF-8 string """
+    if isinstance(data, str):
+        return data
+
     try:
-        decoded = data.decode('utf-8')
+        decoded = str(data.decode('utf-8'))
         return decoded
-    except:
+    except ValueError:
         return data
 
 
 def utf_encode(data):
     """ Encode string as UTF-8 """
+    if isinstance(data, bytes):
+        return data
+
     try:
         encoded = data.encode('utf-8')
         return encoded
-    except:
+    except ValueError:
         return data
 
 
