@@ -4,28 +4,33 @@
 # clearbit email lookup module
 ##
 import json
-import requests
 
 from common import error
 from common import warning
+from common import http_get
 from common import get_apikey
 
 
 def run(email_address):
+    results = None
     api_key = get_apikey('clearbit')
-    headers = {'Authorization': 'Bearer %s' % api_key}
-    results = {}
+    url = 'https://person.clearbit.com/v1/people/email/%s' % email_address
+    headers = {
+        'Authorization': 'Bearer %s' % api_key,
+        'User-Agent': 'OSINT Omnibus (https://github.com/deadbits/omnibus)'
+    }
 
     try:
-        resp = requests.get('https://person.clearbit.com/v1/people/email/%s' % email_address,
-            headers=headers)
+        status, response = http_get(url, headers=headers)
     except:
-        error('failed to get Clearbit API results: %s' % email_address)
+        error('failed to get Clearbit results (%s)' % email_address)
         return results
 
-    if 'error' in resp.content and 'queued' in resp.content:
-        warning('results are queued by Clearbit. please re-run module after 5-10 minutes.')
-        return results
+    if status:
+        if 'error' in response.content and 'queued' in response.content:
+            warning('results are queued by Clearbit. please re-run module after 5-10 minutes.')
+            return results
 
-    results = json.loads(resp.content)
+        results = json.loads(response.content)
+
     return results
