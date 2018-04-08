@@ -15,7 +15,6 @@ import argparse
 from lib import cache
 from lib import mongo
 from lib import storage
-from lib import asciiart
 
 from lib.common import is_ipv4
 from lib.common import is_ipv6
@@ -70,7 +69,6 @@ class Console(cmd2.Cmd):
         self.allow_redirection = True
         self.prompt = 'omnibus >> '
         self.redirector = '>'
-        self.nohelp = warning('Unknown command: "%s".')
         self.quit_on_sigint = False
         self.db = mongo.Mongo()
         self.session = None
@@ -90,10 +88,28 @@ class Console(cmd2.Cmd):
 
 
     def check_type(self, _type):
+        """ Check if string is a valid artifact type """
         valid_types = ['host', 'user', 'email', 'hash']
         if _type in valid_types:
             return True
         return False
+
+
+    def check_session(self, key):
+        """ Attempt to lookup an argument as a key in Redis """
+        result = None
+        is_key = False
+        if self.session is None:
+            return result
+
+        try:
+            key = int(key)
+            is_key = True
+            result = self.session.get(key)
+        except:
+            pass
+
+        return (is_key, result)
 
 
     def detect_type(self, arg):
@@ -164,11 +180,13 @@ class Console(cmd2.Cmd):
             warning('No active session')
             return
 
-        info('Active Artifacts: %s' % self.session.count_queued)
+        count = 0
         keys = self.session.db.scan_iter()
         for key in keys:
             value = self.session.get(key)
             print('[%s] %s' % (key, value))
+            count += 1
+        info('Active Artifacts: %d' % count)
 
 
     def do_find(self, arg):
@@ -194,7 +212,7 @@ class Console(cmd2.Cmd):
         """ Clear currently active artifacts """
         info('Clearing active artifacts from cache ...')
         self.session.clear_queued()
-        success('Cache flushed succesfully')
+        success('cache flushed succesfully')
 
 
     def do_rm(self, arg):
@@ -242,8 +260,11 @@ class Console(cmd2.Cmd):
             success('Opened new session')
             print('Artifact ID: 1')
         else:
-            _id = self.session.count_queued() + 1
-            self.session.data[_id] = arg
+            count = 0
+            for key in self.session.db.scan_iter():
+                count += 1
+            _id = count + 1
+            self.session.set(_id, arg)
             print('Artifact ID: %s' % _id)
 
 
@@ -255,8 +276,8 @@ class Console(cmd2.Cmd):
 
     def do_cat(self, arg):
         """ View artifact details by type and name or list API keys: cat apikeys | cat <artifact name> """
-        if args == 'apikeys':
-            data = json.load(open(conf, 'rb'))
+        if arg == 'apikeys':
+            data = json.load(open(api_keys, 'rb'))
             print json.dumps(data, indent=2)
         else:
             _type = self.detect_type(arg)
@@ -341,6 +362,15 @@ class Console(cmd2.Cmd):
 
     def do_clearbit(self, arg):
         """ Search Clearbit for email address """
+        answer, result = self.check_session(arg)
+        if answer is not None and result is None:
+            error('Unable to find artifact key in session (%s)' % arg)
+            return
+        elif answer is not None and result is not None:
+            arg = result
+        else:
+            pass
+
         if is_email(arg):
             from lib.modules import clearbit
 
@@ -359,6 +389,15 @@ class Console(cmd2.Cmd):
     def do_censys(self, arg):
         """ Search Censys for IPv4 address """
         from lib.modules import censys
+
+        answer, result = self.check_session(arg)
+        if answer is not None and result is None:
+            error('Unable to find artifact key in session (%s)' % arg)
+            return
+        elif answer is not None and result is not None:
+            arg = result
+        else:
+            pass
 
         result = censys.run(arg)
         if result:
@@ -384,6 +423,15 @@ class Console(cmd2.Cmd):
         """ Retrieve DNS records for host artifact """
         from lib.modules import dnsresolve
 
+        answer, result = self.check_session(arg)
+        if answer is True and result is None:
+            error('Unable to find artifact key in session (%s)' % arg)
+            return
+        elif answer is True and result is not None:
+            arg = result
+        else:
+            pass
+
         result = dnsresolve.run(arg)
 
         if result:
@@ -398,6 +446,15 @@ class Console(cmd2.Cmd):
     def do_geoip(self, arg):
         """ Retrieve Geolocation details for host """
         from lib.modules import geoip
+
+        answer, result = self.check_session(arg)
+        if answer is True and result is None:
+            error('Unable to find artifact key in session (%s)' % arg)
+            return
+        elif answer is True and result is not None:
+            arg = result
+        else:
+            pass
 
         result = geoip.run(arg)
 
@@ -429,6 +486,15 @@ class Console(cmd2.Cmd):
         """Check GitHub for active username"""
         from lib.modules import github
 
+        answer, result = self.check_session(arg)
+        if answer is not None and result is None:
+            error('Unable to find artifact key in session (%s)' % arg)
+            return
+        elif answer is not None and result is not None:
+            arg = result
+        else:
+            pass
+
         result = github.run(arg)
         if result is not None:
             if self.db.exists('user', {'name': arg}):
@@ -442,6 +508,15 @@ class Console(cmd2.Cmd):
     def do_hackedemails(self, arg):
         """Check hacked-emails.com for email address"""
         from lib.modules import hackedemails
+
+        answer, result = self.check_session(arg)
+        if answer is not None and result is None:
+            error('Unable to find artifact key in session (%s)' % arg)
+            return
+        elif answer is not None and result is not None:
+            arg = result
+        else:
+            pass
 
         if is_email(arg):
             result = hackedemails.run(arg)
@@ -459,6 +534,15 @@ class Console(cmd2.Cmd):
     def do_hibp(self, arg):
         """Check HaveIBeenPwned for email address"""
         from lib.modules import hibp
+
+        answer, result = self.check_session(arg)
+        if answer is not None and result is None:
+            error('Unable to find artifact key in session (%s)' % arg)
+            return
+        elif answer is not None and result is not None:
+            arg = result
+        else:
+            pass
 
         if is_email(arg):
             result = hibp.run(arg)
@@ -487,6 +571,15 @@ class Console(cmd2.Cmd):
         """Search SANS ISC for host"""
         from lib.modules import sans
 
+        answer, result = self.check_session(arg)
+        if answer is not None and result is None:
+            error('Unable to find artifact key in session (%s)' % arg)
+            return
+        elif answer is not None and result is not None:
+            arg = result
+        else:
+            pass
+
         if is_ipv4(arg) or is_fqdn(arg):
             result = sans.run(arg)
             if result is not None:
@@ -504,6 +597,15 @@ class Console(cmd2.Cmd):
     def do_keybase(self, arg):
         """Search Keybase for active username"""
         from lib.modules import keybase
+
+        answer, result = self.check_session(arg)
+        if answer is not None and result is None:
+            error('Unable to find artifact key in session (%s)' % arg)
+            return
+        elif answer is not None and result is not None:
+            arg = result
+        else:
+            pass
 
         result = keybase.run(arg)
         if result is not None:
@@ -528,10 +630,19 @@ class Console(cmd2.Cmd):
 
     def do_nmap(self, arg):
         """Run NMap discovery scan against host"""
-        running('starting NMap discovery scan ...')
         from lib.modules import nmap
 
+        answer, result = self.check_session(arg)
+        if answer is not None and result is None:
+            error('Unable to find artifact key in session (%s)' % arg)
+            return
+        elif answer is not None and result is not None:
+            arg = result
+        else:
+            pass
+
         if is_ipv4(arg) or is_fqdn(arg):
+            running('starting NMap discovery scan ...')
             result = nmap.run(arg)
             if len(result['ports']) > 0:
                 if self.db.exists('host', {'name': arg}):
@@ -594,6 +705,15 @@ class Console(cmd2.Cmd):
         """Query Shodan for host"""
         from lib.modules import shodan
 
+        answer, result = self.check_session(arg)
+        if answer is not None and result is None:
+            error('Unable to find artifact key in session (%s)' % arg)
+            return
+        elif answer is not None and result is not None:
+            arg = result
+        else:
+            pass
+
         if is_ipv4(arg) or is_ipv6(arg):
             result = shodan.ip(arg)
         elif is_fqdn(arg):
@@ -653,6 +773,16 @@ class Console(cmd2.Cmd):
     def do_virustotal(self, arg):
         """Search VirusTotal for IPv4 or FQDN"""
         from lib.modules import virustotal
+
+        answer, result = self.check_session(arg)
+        if answer is not None and result is None:
+            error('Unable to find artifact key in session (%s)' % arg)
+            return
+        elif answer is not None and result is not None:
+            arg = result
+        else:
+            pass
+
         if is_fqdn(arg):
             result = virustotal.run_host(arg)
             if result is not None:
@@ -688,6 +818,15 @@ class Console(cmd2.Cmd):
         """Perform WHOIS lookup on host"""
         from lib.modules import whois
 
+        answer, result = self.check_session(arg)
+        if answer is not None and result is None:
+            error('Unable to find artifact key in session (%s)' % arg)
+            return
+        elif answer is not None and result is not None:
+            arg = result
+        else:
+            pass
+
         if is_ipv4(arg) or is_fqdn(arg):
             result = whois.run(arg)
 
@@ -707,6 +846,15 @@ class Console(cmd2.Cmd):
         """Search Whois Mind for domains associated to an email address"""
         from lib.modules import whoismind
 
+        answer, result = self.check_session(arg)
+        if answer is not None and result is None:
+            error('Unable to find artifact key in session (%s)' % arg)
+            return
+        elif answer is not None and result is not None:
+            arg = result
+        else:
+            pass
+
         result = whoismind.run(arg)
         if result is not None:
             if self.db.exists('user', {'name': arg}):
@@ -720,7 +868,6 @@ class Console(cmd2.Cmd):
 
 if __name__ == '__main__':
     os.system('clear')
-    print asciiart.show_banner()
 
     parser = argparse.ArgumentParser(description='Omnibus - https://github.com/deadbits/omnibus', epilog='Your resource for all things OSINT')
 
@@ -745,8 +892,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     global conf
+    global api_keys
     global output_dir
     conf = args.conf
+    api_keys = args.keys
     output = args.output
 
     if not os.path.exists(conf):
