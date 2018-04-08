@@ -1,124 +1,132 @@
-from __future__ import absolute_import
+#!/usr/bin/env python
+##
+# omnibus - deadbits.
+#
+# in-memory queue for keeping a list of recently active
+# artifacts to be interacted with inside an omnibus session.
+##
 
-from .abc import DefaultMapping
+from redis import Redis
 
+from common import error
+from common import warning
+from common import success
 
-class _DefaultSize(object):
-    def __getitem__(self, _):
-        return 1
-
-    def __setitem__(self, _, value):
-        assert value == 1
-
-    def pop(self, _):
-        return 1
-
-
-class Cache(DefaultMapping):
-    __size = _DefaultSize()
+from common import utf_decode
+from common import utf_encode
 
 
-    def __init__(self, maxsize, missing=None, getsizeof=None):
-        if missing:
-            self.__missing = missing
-        if getsizeof:
-            self.__getsizeof = getsizeof
-            self.__size = dict()
-        self.data = dict()
-        self.__currsize = 0
-        self.__maxsize = maxsize
+class RedisCache(object):
+    def __init__(self):
+        self.host = '127.0.0.1'
+        self.port = 6379
+        self.database = 1
 
+        self.ttl = 9999999999999
+        if self.ttl is not None:
+            self.ttl = int(self.ttl)
 
-    def __repr__(self):
-        """Return name, iems, maxsize and current size"""
-        return '%s(%r, maxsize=%r, currsize=%r)' % (
-            self.__class__.__name__,
-            list(self.data.items()),
-            self.__maxsize,
-            self.__currsize,
-        )
-
-
-    def __getitem__(self, key):
-        """Get item by key"""
         try:
-            return self.data[key]
-        except KeyError:
-            return self.__missing__(key)
+            self.db = Redis(db=self.database, host=self.host,
+                port=self.port, socket_timeout=None)
+        except:
+            self.db = None
 
 
-    def __setitem__(self, key, value):
-        """Set item by key and value"""
-        maxsize = self.__maxsize
-        size = self.getsizeof(value)
-        if size > maxsize:
-            raise ValueError('value too large')
-        if key not in self.data or self.__size[key] < size:
-            while self.__currsize + size > maxsize:
-                self.popitem()
-        if key in self.data:
-            diffsize = size - self.__size[key]
-        else:
-            diffsize = size
-        self.data[key] = value
-        self.__size[key] = size
-        self.__currsize += diffsize
-
-
-    def __delitem__(self, key):
-        """Remove item by key"""
-        size = self.__size.pop(key)
-        del self.data[key]
-        self.__currsize -= size
-
-
-    def __contains__(self, key):
-        """Check if cache contains item by key"""
-        return key in self.data
-
-
-    def __missing__(self, key):
-        """Add item by key if missing"""
-        value = self.__missing(key)
+    def send(self, message, queue_name):
+        """ Send a new message to a specific Redis queue """
+        message = utf_encode(message)
         try:
-            self.__setitem__(key, value)
-        except ValueError:
-            pass  # value too large
-        return value
+            self.db.lpush(queue_name, message)
+        except Exception as err:
+            error('[redis] failed to push message to queue %s (error: %s)' % (queue_name, str(err)))
+            pass
 
 
-    def __iter__(self):
-        """Iterate over items"""
-        return iter(self.data)
+    def receive(self, queue_name):
+        """ Return most recent message from a given Redis queue"""
+        try:
+            ret_val = self.db.lindex(queue_name, -1)
+            if isinstance(ret_val, bytes):
+                return utf_decode(ret_val)
+            return ret_val
+        except Exception as err:
+            error('[redis] failed to receive message from queue %s (error: %s)' % (queue_name, str(err)))
+            pass
+
+    def delete(self, names):
+        """ Remove one or more keys by name """
+        try:
+            self.db.delete(names)
+        except Exception as err:
+            error('[redis] failed to delete artifacts (error: %s)' % str(err))
 
 
-    @property
-    def __len__(self):
-        """Get number of items"""
-        return len(self.data)
+    def exists(self, key):
+        """ Check if value exists by key """
+        return self.db.exists(key)
 
 
-    @staticmethod
-    def __getsizeof(value):
-        return 1
+    def get(self, key):
+        """ Get a value from redis by key """
+        retval = self.db.get(key)
+        if isinstance(retval, bytes):
+            return utf_decode(retval)
+        return retval
 
 
-    @staticmethod
-    def __missing(key):
-        raise KeyError(key)
+    def set(self, key, value, ttl=None):
+        """ Set a value in cache with optional TTL """
+        if ttl is None:
+            ttl = self.ttl
+        if isinstance(value, str):
+            value = utf_encode(value)
+        # backward compatibility (Redis v2.2)
+        self.db.setnx(key, value)
+        self.db.expire(key, ttl)
 
 
-    @property
-    def maxsize(self):
-        """The maximum size of the cache."""
-        return self.__maxsize
-
-    @property
-    def currsize(self):
-        """The current size of the cache."""
-        return self.__currsize
+    def acknowledge(self, queue_name):
+        try:
+            return self.db.rpop(queue_name)
+        except Exception as err:
+            error('[redis] failed to acknowledge queue %s (error: %s)' % (queue_name, str(err)))
+            pass
 
 
-    def getsizeof(self, value):
-        """Return the size of a cache element's value."""
-        return self.__getsizeof(value)
+    def count_queued(self, *queues):
+        """ Get count of all messages in all queues"""
+        queue_dict = {}
+        for queue in queues:
+            try:
+                queue_dict[queue] = self.db.llen(queue)
+            except Exception as err:
+                error('[redis] failed to count queued messages (queues: %s) (error: %s)' % (str(queue)), str(err))
+                pass
+        return queue_dict
+
+
+    def event_stream(self, queue_name):
+        """ Use pubsub method to listen for messages from a specific subscription/queue """
+        pub_sub = self.db.pubsub()
+        pub_sub.subscribe(queue_name)
+        for message in pub_sub.listen():
+            if isinstance(message, bytes):
+                yield utf_decode(message['data'])
+            else:
+                yield message['data']
+
+
+    def clear_queue(self, queue_name):
+        """ Clear a queue by deleting the key """
+        try:
+            return self.db.delete(queue_name)
+        except Exception as err:
+            error('[redis] failed to delete queue %s (error: %s)' % (queue_name, str(err)))
+            pass
+
+
+    def flush(self):
+        """ Flush opened database entirely """
+        self.db.flushdb()
+
