@@ -5,6 +5,7 @@
 ##
 import json
 
+from common import http_get
 from common import error
 from common import warning
 from common import http_get
