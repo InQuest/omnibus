@@ -5,22 +5,22 @@
 ##
 import censys.ipv4
 
+from common import error
 from common import is_ipv4
 from common import get_apikey
 
 
-def run(domain):
+def run(host):
     key = get_apikey('censys')
+    results = None
 
-    if is_ipv4(domain):
+    if is_ipv4(host):
         censysio = censys.ipv4.CensysIPv4(api_id=key['token'], api_secret=key['secret'])
 
         try:
-            results = censysio.view(domain)
+            results = censysio.view(host)
         except:
-            results = {}
-
-    else:
-        results = {}
+            error('failed to get Censys results (%s)' % host)
+            return results
 
     return results

@@ -4,13 +4,6 @@
 #
 # in-memory queue for keeping a list of recently active
 # artifacts to be interacted with inside an omnibus session.
-# project: augmentd
-# Redis cache and queue system
-
-# conn = redis.StrictRedis(host='localhost', port=6379, db=1)
-#
-#    conn.publish('notifications', 'Hello!')
-#    return flask.redirect('/')
 ##
 
 from redis import Redis
@@ -21,9 +14,6 @@ from common import success
 
 from common import utf_decode
 from common import utf_encode
-
-
-__all__ = ['RedisCache']
 
 
 class RedisCache(object):
@@ -74,7 +64,7 @@ class RedisCache(object):
 
     def exists(self, key):
         """ Check if value exists by key """
-        return self.redis.exists(key)
+        return self.db.exists(key)
 
 
     def get(self, key):
@@ -139,3 +129,4 @@ class RedisCache(object):
     def flush(self):
         """ Flush opened database entirely """
         self.db.flushdb()
+
