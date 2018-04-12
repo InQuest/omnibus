@@ -10,7 +10,9 @@ import os
 import cmd2
 import sys
 import json
+import datetime
 import argparse
+import functools
 
 from lib import cache
 from lib import mongo
@@ -38,6 +40,30 @@ from lib.models import User
 from lib.models import Email
 from lib.models import BitcoinAddress
 
+from lib.modules import cymon
+from lib.modules import clearbit
+from lib.modules import censys
+from lib.modules import dshield
+from lib.modules import dnsbrute
+from lib.modules import dnsresolve
+from lib.modules import geoip
+from lib.modules import gist
+from lib.modules import gitlab
+from lib.modules import github
+from lib.modules import hackedemails
+from lib.modules import hibp
+from lib.modules import ipinfo
+from lib.modules import ipvoid
+from lib.modules import sans
+from lib.modules import keybase
+from lib.modules import nmap
+from lib.modules import securitynews
+from lib.modules import shodan
+from lib.modules import urlvoid
+from lib.modules import virustotal
+from lib.modules import whois
+from lib.modules import whoismind
+
 
 help_dict = {
     'general': [
@@ -50,12 +76,14 @@ help_dict = {
         'abusech', 'alienvault', 'blockchain', 'clearbit', 'censys', 'cymon',
         'dnsbrute', 'dnsresolve', 'geoip', 'fullcontact', 'gist', 'gitlab', 'github', 'hackedemails', 'hibp',
         'hunter', 'ipinfo', 'ipvoid', 'isc', 'keybase', 'mdl', 'nmap', 'passivetotal', 'pastebin', 'phishtank',
-        'projecthp', 'reddit', 'rss', 'shodan', 'ssl', 'securitynews', 'threatcrowd',
+        'projecthp', 'reddit', 'rss', 'run', 'shodan', 'ssl', 'securitynews', 'threatcrowd',
         'threatexpert', 'totalhash', 'twitter', 'urlvoid', 'usersearch', 'virustotal', 'vxvault', 'web', 'whois'],
     'sessions': [
         'session', 'ls', 'clear'
     ]
 }
+
+jsondate = lambda obj: obj.isoformat() if isinstance(obj, datetime) else None
 
 
 class Console(cmd2.Cmd):
@@ -72,7 +100,6 @@ class Console(cmd2.Cmd):
         self.quit_on_sigint = False
         self.db = mongo.Mongo()
         self.session = None
-        self.max_session_size = 100
 
         del cmd2.Cmd.do_alias
         del cmd2.Cmd.do_edit
@@ -87,16 +114,33 @@ class Console(cmd2.Cmd):
         del cmd2.Cmd.do__relative_load
 
 
-    def check_type(self, _type):
-        """ Check if string is a valid artifact type """
-        valid_types = ['host', 'user', 'email', 'hash']
-        if _type in valid_types:
-            return True
-        return False
+    def sigint_handler(self, signum, frame):
+        pipe_proc = self.pipe_proc
+        if pipe_proc is not None:
+            pipe_proc.terminate()
+
+        if self.session is not None:
+            self.session.flush()
+
+        raise KeyboardInterrupt('Caught keyboard interrupt; quitting ...')
+
+
+    def do_quit(self, _):
+        """Exit Omnibus shell."""
+        self._should_quit = True
+
+        if self.session is not None:
+            running('Clearing artifact cache ...')
+            self.session.flush()
+
+        warning('Closing Omnibus shell ...')
+        return self._STOP_AND_EXIT
 
 
     def check_session(self, key):
-        """ Attempt to lookup an argument as a key in Redis """
+        """ Attempt to lookup an argument as a key in Redis
+
+        Return key's value if successfully found """
         result = None
         is_key = False
         if self.session is None:
@@ -138,27 +182,37 @@ class Console(cmd2.Cmd):
         return None
 
 
+    def do_clear(self, arg):
+        """Clear the console"""
+        os.system('clear')
+
+
     def do_modules(self, arg):
         """Show module list"""
+        print('[ Modules ]')
         for cmd in help_dict['modules']:
-            print cmd
+            print(cmd)
+
 
     def do_artifacts(self, arg):
         """Show artifact specific commands"""
+        print('[ Artifact Commands ]')
         for cmd in help_dict['artifacts']:
-            print cmd
+            print(cmd)
 
 
     def do_general(self, arg):
         """Show general commands"""
+        print('[ General Commands ]')
         for cmd in help_dict['general']:
-            print cmd
+            print(cmd)
 
 
     def do_sessions(self, arg):
         """Show session commands"""
+        print('[ Session Commands ]')
         for cmd in help_dict['sessions']:
-            print cmd
+            print(cmd)
 
 
     def do_redirect(self, arg):
@@ -167,7 +221,7 @@ class Console(cmd2.Cmd):
 
 
     def do_session(self, arg):
-        """ Open a new session """
+        """Open a new session"""
         self.session = cache.RedisCache()
         if self.session.db is None:
             error('Failed to connect to Redis back-end. Please ensure the Redis service is running')
@@ -176,7 +230,7 @@ class Console(cmd2.Cmd):
 
 
     def do_ls(self, arg):
-        """ View currently active artifacts """
+        """View current sessions artifacts"""
         if self.session is None:
             warning('No active session')
             return
@@ -191,12 +245,15 @@ class Console(cmd2.Cmd):
 
 
     def do_find(self, arg):
-        """ Find db-stored artifact by name and view results """
+        """Search Mongo for artifact and display results
+
+        Usage: find <artifact name>
+               find <session id> """
         answer, result = self.check_session(arg)
-        if answer is not None and result is None:
+        if answer and result is None:
             error('Unable to find artifact key in session (%s)' % arg)
             return
-        elif answer is not None and result is not None:
+        elif answer and result is not None:
             arg = result
         else:
             pass
@@ -219,14 +276,16 @@ class Console(cmd2.Cmd):
 
 
     def do_wipe(self, arg):
-        """ Clear currently active artifacts """
+        """Clear currently active artifacts """
         info('Clearing active artifacts from cache ...')
-        self.session.clear_queued()
+        self.session.flush()
         success('cache flushed succesfully')
 
 
     def do_rm(self, arg):
-        """ Remove artifact from session by ID"""
+        """Remove artifact from session by ID
+
+        Usage: rm <session id>"""
         try:
             arg = int(arg)
         except:
@@ -244,7 +303,9 @@ class Console(cmd2.Cmd):
 
 
     def do_new(self, arg):
-        """ Create a new artifact: new <name> """
+        """Create a new artifact
+
+        Usage: new <name> """
         _type = self.detect_type(arg)
 
         if _type == 'email':
@@ -279,17 +340,40 @@ class Console(cmd2.Cmd):
 
 
     def do_delete(self, arg):
-        """ Remove artifact from database by name: delete <name>"""
+        """Remove artifact from database by name or ID
+
+        Usage: delete <name> """
+        answer, result = self.check_session(arg)
+        if answer and result is None:
+            error('Unable to find artifact key in session (%s)' % arg)
+            return
+        elif answer and result is not None:
+            arg = result
+        else:
+            pass
+
         _type = self.detect_type(arg)
         self.db.delete_one(_type, {'name': arg})
 
 
     def do_cat(self, arg):
-        """ View artifact details by type and name or list API keys: cat apikeys | cat <artifact name> """
+        """View artifact details or list API keys
+
+        Usage: cat apikeys
+               cat <artifact name> """
         if arg == 'apikeys':
             data = json.load(open(api_keys, 'rb'))
             print json.dumps(data, indent=2)
         else:
+            answer, result = self.check_session(arg)
+            if answer and result is None:
+                error('Unable to find artifact key in session (%s)' % arg)
+                return
+            elif answer and result is not None:
+                arg = result
+            else:
+                pass
+
             _type = self.detect_type(arg)
             result = self.db.find(_type, {'name': arg}, one=True)
             if len(result) == 0:
@@ -299,7 +383,7 @@ class Console(cmd2.Cmd):
 
 
     def do_open(self, arg):
-        """ Load text file list of artifacts to be created: open <path/to/file.txt> """
+        """Load text file list of artifacts to be created: open <path/to/file.txt> """
         if not os.path.exists(arg):
             warning('Cannot find list file on disk (%s)' % arg)
             return
@@ -345,8 +429,11 @@ class Console(cmd2.Cmd):
 
 
     def do_report(self, arg):
-        """ Save artifact report as JSON file: report <artifact name> """
-        _type = self.check_type(arg)
+        """Save artifact report as JSON file
+
+        Usage: report <artifact name>
+               report <session id> """
+        _type = self.detect_type(arg)
 
         result = self.db.find(_type, {'name': arg}, one=True)
         if len(result) == 0:
@@ -361,22 +448,22 @@ class Console(cmd2.Cmd):
 
 
     def do_abusech(self, arg):
-        """ Search Abuse.ch for artifact details """
+        """Search Abuse.ch for artifact details """
         pass
 
 
     def do_alienvault(self, arg):
-        """ Search AlienVault for artifact """
+        """Search AlienVault for artifact """
         pass
 
 
     def do_clearbit(self, arg):
-        """ Search Clearbit for email address """
+        """Search Clearbit for email address """
         answer, result = self.check_session(arg)
-        if answer is not None and result is None:
+        if answer and result is None:
             error('Unable to find artifact key in session (%s)' % arg)
             return
-        elif answer is not None and result is not None:
+        elif answer and result is not None:
             arg = result
         else:
             pass
@@ -389,7 +476,7 @@ class Console(cmd2.Cmd):
                 if self.db.exists('email', {'name': arg}):
                     self.db.update_one('email', {'name': arg}, {'data.clearbit': result})
                     success('Saved Clearbit results')
-                print json.dumps(result, indent=2)
+                print(json.dumps(result, indent=2, default=jsondate))
             else:
                 warning('Failed to get Clearbit results (%s)' % arg)
         else:
@@ -401,10 +488,10 @@ class Console(cmd2.Cmd):
         from lib.modules import censys
 
         answer, result = self.check_session(arg)
-        if answer is not None and result is None:
+        if answer and result is None:
             error('Unable to find artifact key in session (%s)' % arg)
             return
-        elif answer is not None and result is not None:
+        elif answer and result is not None:
             arg = result
         else:
             pass
@@ -414,7 +501,7 @@ class Console(cmd2.Cmd):
             if self.db.exists('host', {'name': arg}):
                 self.db.update_one('host', {'name': arg}, {'data.censys': result})
                 success('Saved Censys.io results')
-            print json.dumps(result, indent=2)
+            print(json.dumps(result, indent=2, default=jsondate))
         else:
             warning('Failed to get Censys IPv4 results (%s)' % arg)
 
@@ -434,10 +521,10 @@ class Console(cmd2.Cmd):
         from lib.modules import dnsresolve
 
         answer, result = self.check_session(arg)
-        if answer is True and result is None:
+        if answer and result is None:
             error('Unable to find artifact key in session (%s)' % arg)
             return
-        elif answer is True and result is not None:
+        elif answer and result is not None:
             arg = result
         else:
             pass
@@ -448,7 +535,7 @@ class Console(cmd2.Cmd):
             if self.db.exists('host', {'name': arg}):
                 self.db.update_one('host', {'name': arg}, {'data.DNS': result})
                 success('Saved DNS resolution results')
-            print json.dumps(result, indent=2)
+            print(json.dumps(result, indent=2, default=jsondate))
         else:
             warning('Failed to get DNS resolution results (%s)' % arg)
 
@@ -458,10 +545,10 @@ class Console(cmd2.Cmd):
         from lib.modules import geoip
 
         answer, result = self.check_session(arg)
-        if answer is True and result is None:
+        if answer and result is None:
             error('Unable to find artifact key in session (%s)' % arg)
             return
-        elif answer is True and result is not None:
+        elif answer and result is not None:
             arg = result
         else:
             pass
@@ -472,7 +559,7 @@ class Console(cmd2.Cmd):
             if self.db.exists('host', {'name': arg}):
                 self.db.update_one('host', {'name': arg}, {'data.geoip': result})
                 success('Saved geoIP results')
-            print json.dumps(result, indent=2)
+            print(json.dumps(result, indent=2, default=jsondate))
         else:
             warning('Failed to get freegeoip results (%s)' % arg)
 
@@ -497,10 +584,10 @@ class Console(cmd2.Cmd):
         from lib.modules import github
 
         answer, result = self.check_session(arg)
-        if answer is not None and result is None:
+        if answer and result is None:
             error('Unable to find artifact key in session (%s)' % arg)
             return
-        elif answer is not None and result is not None:
+        elif answer and result is not None:
             arg = result
         else:
             pass
@@ -510,7 +597,7 @@ class Console(cmd2.Cmd):
             if self.db.exists('user', {'name': arg}):
                 self.db.update_one('user', {'name': arg}, {'data.github': result})
                 success('Saved GitHub results')
-            print json.dumps(result, indent=2)
+            print(json.dumps(result, indent=2, default=jsondate))
         else:
             warning('Failed to get GitHub results (%s)' % arg)
 
@@ -520,10 +607,10 @@ class Console(cmd2.Cmd):
         from lib.modules import hackedemails
 
         answer, result = self.check_session(arg)
-        if answer is not None and result is None:
+        if answer and result is None:
             error('Unable to find artifact key in session (%s)' % arg)
             return
-        elif answer is not None and result is not None:
+        elif answer and result is not None:
             arg = result
         else:
             pass
@@ -534,7 +621,7 @@ class Console(cmd2.Cmd):
                 if self.db.exists('email', {'name': arg}):
                     self.db.update_one('email', {'name': arg}, {'data.hackedemails': result})
                     success('Saved hacked-emails results')
-                print json.dumps(result, indent=2)
+                print(json.dumps(result, indent=2, default=jsondate))
             else:
                 warning('Failed to get hacked-emails results (%s)' % arg)
         else:
@@ -546,10 +633,10 @@ class Console(cmd2.Cmd):
         from lib.modules import hibp
 
         answer, result = self.check_session(arg)
-        if answer is not None and result is None:
+        if answer and result is None:
             error('Unable to find artifact key in session (%s)' % arg)
             return
-        elif answer is not None and result is not None:
+        elif answer and result is not None:
             arg = result
         else:
             pass
@@ -560,7 +647,7 @@ class Console(cmd2.Cmd):
                 if self.db.exists('email', {'name': arg}):
                     self.db.update_one('email', {'name': arg}, {'data.hibp': result})
                     success('saved HIBP results')
-                print json.dumps(result, indent=2)
+                print(json.dumps(result, indent=2, default=jsondate))
             else:
                 warning('Failed to get HIBP results (%s)' % arg)
         else:
@@ -572,10 +659,10 @@ class Console(cmd2.Cmd):
         from lib.modules import ipinfo
 
         answer, result = self.check_session(arg)
-        if answer is not None and result is None:
+        if answer and result is None:
             error('Unable to find artifact key in session (%s)' % arg)
             return
-        elif answer is not None and result is not None:
+        elif answer and result is not None:
             arg = result
         else:
             pass
@@ -587,7 +674,7 @@ class Console(cmd2.Cmd):
                     doc_id = self.db.update_one('host', {'name': arg}, {'data.ipinfo': result})
                     if doc_id is not None:
                         success('Saved IPInfo results')
-                print json.dumps(result, indent=2)
+                print(json.dumps(result, indent=2, default=jsondate))
             else:
                 warning('Failed to get IPInfo results (%s)' % arg)
         else:
@@ -599,10 +686,10 @@ class Console(cmd2.Cmd):
         from lib.modules import ipvoid
 
         answer, result = self.check_session(arg)
-        if answer is not None and result is None:
+        if answer and result is None:
             error('Unable to find artifact key in session (%s)' % arg)
             return
-        elif answer is not None and result is not None:
+        elif answer and result is not None:
             arg = result
         else:
             pass
@@ -614,7 +701,7 @@ class Console(cmd2.Cmd):
                     doc_id = self.db.update_one('host', {'name': arg}, {'data.ipvoid': result})
                     if doc_id is not None:
                         success('Saved IPVoid results')
-                print json.dumps(result, indent=2)
+                print(json.dumps(result, indent=2, default=jsondate))
             else:
                 warning('Failed to get IPVoid results (%s)' % arg)
         else:
@@ -626,10 +713,10 @@ class Console(cmd2.Cmd):
         from lib.modules import sans
 
         answer, result = self.check_session(arg)
-        if answer is not None and result is None:
+        if answer and result is None:
             error('Unable to find artifact key in session (%s)' % arg)
             return
-        elif answer is not None and result is not None:
+        elif answer and result is not None:
             arg = result
         else:
             pass
@@ -641,7 +728,7 @@ class Console(cmd2.Cmd):
                     doc_id = self.db.update_one('host', {'name': arg}, {'data.isc': result})
                     if doc_id is not None:
                         success('Saved SANS ISC results')
-                print json.dumps(result, indent=2)
+                print(json.dumps(result, indent=2, default=jsondate))
             else:
                 warning('Failed to get SANS ISC results (%s)' % arg)
         else:
@@ -653,10 +740,10 @@ class Console(cmd2.Cmd):
         from lib.modules import keybase
 
         answer, result = self.check_session(arg)
-        if answer is not None and result is None:
+        if answer and result is None:
             error('Unable to find artifact key in session (%s)' % arg)
             return
-        elif answer is not None and result is not None:
+        elif answer and result is not None:
             arg = result
         else:
             pass
@@ -667,7 +754,7 @@ class Console(cmd2.Cmd):
                 doc_id = self.db.update_one('user', {'name': arg}, {'data.keybase': result})
                 if doc_id is not None:
                     success('Saved Keybase results')
-            print json.dumps(result, indent=2)
+            print(json.dumps(result, indent=2, default=jsondate))
         else:
             warning('Failed to get Keybase results (%s)' % arg)
 
@@ -687,10 +774,10 @@ class Console(cmd2.Cmd):
         from lib.modules import nmap
 
         answer, result = self.check_session(arg)
-        if answer is not None and result is None:
+        if answer and result is None:
             error('Unable to find artifact key in session (%s)' % arg)
             return
-        elif answer is not None and result is not None:
+        elif answer and result is not None:
             arg = result
         else:
             pass
@@ -730,6 +817,17 @@ class Console(cmd2.Cmd):
         pass
 
 
+    def do_rss(self, arg):
+        """Read latest from RSS feed
+
+        Usage: rss <feed url>"""
+
+
+    def do_run(self, arg):
+        """Run all modules for artifact type
+
+        Usage: run <artifact name>"""
+
     def do_securitynews(self, arg):
         """Get current cybersecurity headlines from Google News"""
         from lib.modules import securitynews
@@ -751,10 +849,10 @@ class Console(cmd2.Cmd):
         from lib.modules import shodan
 
         answer, result = self.check_session(arg)
-        if answer is not None and result is None:
+        if answer and result is None:
             error('Unable to find artifact key in session (%s)' % arg)
             return
-        elif answer is not None and result is not None:
+        elif answer and result is not None:
             arg = result
         else:
             pass
@@ -768,7 +866,7 @@ class Console(cmd2.Cmd):
             if self.db.exists('host', {'name': arg}):
                 self.db.update_one('host', {'name': arg}, {'data.shodan': result})
                 success('Saved Shodan results')
-            print json.dumps(result, indent=2)
+            print(json.dumps(result, indent=2, default=jsondate))
         else:
             error('Failed to retrieve Shodan results: %s' % arg)
 
@@ -776,7 +874,7 @@ class Console(cmd2.Cmd):
     def do_source(self, arg):
         """ Set the source for the most recent artifact added to a session """
         last = self.session.receive('artifacts')
-        _type = self.check_type(last)
+        _type = self.detect_type(last)
 
         if self.db.exists(_type, {'name': last}):
             self.db.update_one(_type, {'name': last}, {'source': arg})
@@ -807,7 +905,29 @@ class Console(cmd2.Cmd):
 
     def do_urlvoid(self, arg):
         """Search URLVoid for domain name"""
-        pass
+        from lib.modules import urlvoid
+
+        answer, result = self.check_session(arg)
+        if answer and result is None:
+            error('Unable to find artifact key in session (%s)' % arg)
+            return
+        elif answer and result is not None:
+            arg = result
+        else:
+            pass
+
+        if is_ipv4(arg) or is_fqdn(arg):
+            result = urlvoid.run(arg)
+            if result is not None:
+                if self.db.exists('host', {'name': arg}):
+                    doc_id = self.db.update_one('host', {'name': arg}, {'data.urlvoid': result})
+                    if doc_id is not None:
+                        success('Saved URLVoid results')
+                print(json.dumps(result, indent=2, default=jsondate))
+            else:
+                warning('Failed to get URLVoid results (%s)' % arg)
+        else:
+            warning('Must specify IPv4 or FQDN artifact (%s)' % arg)
 
 
     def do_usersearch(self, arg):
@@ -816,7 +936,7 @@ class Console(cmd2.Cmd):
 
 
     def do_virustotal(self, arg):
-        """Search VirusTotal for IPv4 or FQDN"""
+        """Search VirusTotal for IPv4, FQDN, or Hash"""
         from lib.modules import virustotal
 
         answer, result = self.check_session(arg)
@@ -830,24 +950,42 @@ class Console(cmd2.Cmd):
 
         if is_fqdn(arg):
             result = virustotal.run_host(arg)
+
             if result is not None:
                 if self.db.exists('host', {'name': arg}):
                     self.db.update_one('host', {'name': arg}, {'data.virustotal': result})
                     success('Saved VirusTotal results')
-                print json.dumps(result, indent=2)
+                print(json.dumps(result, indent=2, default=jsondate))
+
             else:
                 warning('Failed to get VirusTotal results (%s)' % arg)
+
         elif is_ipv4(arg):
             result = virustotal.run_ip(arg)
+
             if result is not None:
                 if self.db.exists('host', {'name': arg}):
                     self.db.update_one('host', {'name': arg}, {'data.virustotal': result})
                     success('Saved VirusTotal results:')
-                print json.dumps(result, indent=2)
+                print(json.dumps(result, indent=2, default=jsondate))
+
             else:
                 warning('Failed to get VirusTotal results (%s)' % arg)
+
+        elif is_hash(arg):
+            result = virustotal.run_hash(arg)
+
+            if result is not None:
+                if self.db.exists('hash', {'name': arg}):
+                    self.db.update_one('hash', {'name': arg}, {'data.virustotal', result})
+                    success('Saved VirusTotal results')
+                print(json.dumps(result, indent=2, default=jsondate))
+
+            else:
+                warning('Failed to get VirusTotal results (%s)' % arg)
+
         else:
-            warning('Virustotal command only accepts IPv4 or FQDN artifacts')
+            warning('Virustotal command only accepts IPv4, FQDN artifacts')
 
 
     def do_vxvault(self, arg):
@@ -872,14 +1010,25 @@ class Console(cmd2.Cmd):
         else:
             pass
 
-        if is_ipv4(arg) or is_fqdn(arg):
-            result = whois.run(arg)
+        if is_ipv4(arg):
+            result = whois.ip_run(arg)
 
             if result is not None:
                 if self.db.exists('host', {'name': arg}):
                     self.db.update_one('host', {'name': arg}, {'data.whois': result})
                     success('Saved WHOIS results')
-                print json.dumps(result, indent=2)
+                print(json.dumps(result, indent=2, default=jsondate))
+            else:
+                warning('Failed to get WHOIS results (%s)' % arg)
+
+        elif is_fqdn(arg):
+            result = whois.host_run(arg)
+
+            if result is not None:
+                if self.db.exists('host', {'name': arg}):
+                    self.db.update_one('host', {'name': arg}, {'data.whois': result})
+                    success('Saved WHOIS results')
+                print(json.dumps(result, indent=2, default=jsondate))
             else:
                 warning('Failed to get WHOIS results (%s)' % arg)
 
@@ -906,7 +1055,7 @@ class Console(cmd2.Cmd):
                 doc_id = self.db.update_one('user', {'name': arg}, {'data.whoismind': result})
                 if doc_id is not None:
                     success('Saved WhoisMind results')
-            print json.dumps(result, indent=2)
+            print(json.dumps(result, indent=2, default=jsondate))
         else:
             warning('Failed to get WhoisMind results (%s)' % arg)
 
