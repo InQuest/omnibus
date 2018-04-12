@@ -3,34 +3,40 @@
 # omnibus - deadbits.
 # shodan search
 ##
-import requests
 
-from lib.common import get_apikey
+from common import http_get
+from common import get_apikey
 
 
 def domain(host):
-    result = {}
-
+    result = None
     api_key = get_apikey('shodan')
     url = 'https://api.shodan.io/shodan/host/search?key=%s&query=hostname:%s&facets={facets}' % (api_key, host)
+    headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus'}
 
     try:
-        resp = requests.get(url)
+        status, response = http_get(url, headers=headers)
     except:
         return result
 
-    return resp.json()
+    if status:
+        result = response.json()
+
+    return result
 
 
 def ip(host):
-    result = {}
-
+    result = None
     api_key = get_apikey('shodan')
     url = 'https://api.shodan.io/shodan/host/%s?key=%s' % (host, api_key)
+    headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus'}
 
     try:
-        resp = requests.get(url)
+        status, response = http_get(url, headers=headers)
     except:
         return result
 
-    return resp.json()
+    if status:
+        result = response.json()
+
+    return result

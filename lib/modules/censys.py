@@ -5,7 +5,6 @@
 ##
 import censys.ipv4
 
-from common import error
 from common import is_ipv4
 from common import get_apikey
 
@@ -20,7 +19,6 @@ def run(host):
         try:
             results = censysio.view(host)
         except:
-            error('failed to get Censys results (%s)' % host)
             return results
 
     return results

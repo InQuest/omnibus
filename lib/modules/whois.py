@@ -7,14 +7,15 @@ from ipwhois import IPWhois
 
 
 def run(host):
-    results = {}
+    results = None
     whois = IPWhois(host)
 
     try:
         data = whois.lookup_rdap(depth=1)
     except:
-        data = None
+        return results
 
+    results = {}
     if data is not None:
         results['ASN'] = data['asn']
         results['Organization'] = data['network']['name'] if 'network' in data.keys() else None

@@ -12,7 +12,7 @@ def run(host):
     url = 'http://freegeoip.net/json/%s' % host
     headers = {
         'Accept-Encoding': 'gzip, deflate',
-        'User-Agent': 'OSINT Omnibus (https://github.com/deadbits/omnibus)'
+        'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'
     }
 
     try:

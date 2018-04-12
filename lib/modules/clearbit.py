@@ -6,9 +6,7 @@
 import json
 
 from common import http_get
-from common import error
 from common import warning
-from common import http_get
 from common import get_apikey
 
 
@@ -18,13 +16,12 @@ def run(email_address):
     url = 'https://person.clearbit.com/v1/people/email/%s' % email_address
     headers = {
         'Authorization': 'Bearer %s' % api_key,
-        'User-Agent': 'OSINT Omnibus (https://github.com/deadbits/omnibus)'
+        'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'
     }
 
     try:
         status, response = http_get(url, headers=headers)
     except:
-        error('failed to get Clearbit results (%s)' % email_address)
         return results
 
     if status:

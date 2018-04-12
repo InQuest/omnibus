@@ -3,44 +3,59 @@
 # omnibus - deadbits.
 # cyber security news
 ##
-import requests
 import xml.etree.ElementTree as ET
+
+from common import http_get
 
 
 def vuln_news():
-    result = []
-    urlip = "https://news.google.com/news/rss/search/section/q/CVE%20vulnerability/CVE%20vulnerability?hl=en&gl=US&ned=us"
+    url = "https://news.google.com/news/rss/search/section/q/CVE%20vulnerability/CVE%20vulnerability?hl=en&gl=US&ned=us"
+    headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
 
     try:
-        resp = requests.get(urlip)
-        content = resp.text.encode('utf-8')
-        root = ET.fromstring(content)
-
-        for item in root.iter('item'):
-            title = item.find('title').text
-            link = item.find('link').text
-            result.append({'title': title, 'url': link})
-
+        status, response = http_get(url, headers=headers)
     except:
         return None
+
+    if status:
+        result = []
+        try:
+            content = response.text.encode('utf-8')
+            root = ET.fromstring(content)
+
+            for item in root.iter('item'):
+                title = item.find('title').text
+                link = item.find('link').text
+                result.append({'title': title, 'url': link})
+        except:
+            return None
+
+    return result
 
 
 def security_news():
-    result = []
     url = 'https://news.google.com/news/rss/search/section/q/cybersecurity/cybersecurity?hl=en&gl=US&ned=us'
+    headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
 
     try:
-        resp = requests.get(url)
-        content = resp.text.encode('utf-8')
-        root = ET.fromstring(content)
-
-        for item in root.iter('item'):
-            title = item.find('title').text
-            link = item.find('link').text
-            result.append({'title': title, 'url': link})
-
+        status, response = http_get(url, headers=headers)
     except:
         return None
+
+    if status:
+        result = []
+        try:
+            content = response.text.encode('utf-8')
+            root = ET.fromstring(content)
+
+            for item in root.iter('item'):
+                title = item.find('title').text
+                link = item.find('link').text
+                result.append({'title': title, 'url': link})
+        except:
+            return None
+
+    return result
 
 
 def run():
