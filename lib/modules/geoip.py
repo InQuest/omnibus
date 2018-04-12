@@ -23,5 +23,6 @@ def run(host):
 
     if status:
         results = response.json()
+        del results['__deprecation_message__']
 
     return results
