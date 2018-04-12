@@ -50,7 +50,7 @@ help_dict = {
         'abusech', 'alienvault', 'blockchain', 'clearbit', 'censys', 'cymon',
         'dnsbrute', 'dnsresolve', 'geoip', 'fullcontact', 'gist', 'gitlab', 'github', 'hackedemails', 'hibp',
         'hunter', 'ipinfo', 'ipvoid', 'isc', 'keybase', 'mdl', 'nmap', 'passivetotal', 'pastebin', 'phishtank',
-        'projecthp', 'reddit', 'rss', 'scribd', 'shodan', 'ssl', 'securitynews', 'threatcrowd',
+        'projecthp', 'reddit', 'rss', 'shodan', 'ssl', 'securitynews', 'threatcrowd',
         'threatexpert', 'totalhash', 'twitter', 'urlvoid', 'usersearch', 'virustotal', 'vxvault', 'web', 'whois'],
     'sessions': [
         'session', 'ls', 'clear'
@@ -137,6 +137,7 @@ class Console(cmd2.Cmd):
             return self.session.get(int(artifact_id))
         return None
 
+
     def do_modules(self, arg):
         """Show module list"""
         for cmd in help_dict['modules']:
@@ -191,6 +192,15 @@ class Console(cmd2.Cmd):
 
     def do_find(self, arg):
         """ Find db-stored artifact by name and view results """
+        answer, result = self.check_session(arg)
+        if answer is not None and result is None:
+            error('Unable to find artifact key in session (%s)' % arg)
+            return
+        elif answer is not None and result is not None:
+            arg = result
+        else:
+            pass
+
         info('Searching for artifact (%s)' % arg)
 
         if is_ipv4(arg) or is_ipv6(arg) or is_fqdn(arg):
@@ -377,8 +387,8 @@ class Console(cmd2.Cmd):
             result = clearbit.run(arg)
             if result:
                 if self.db.exists('email', {'name': arg}):
-                    self.db.update_one('email', {'name': arg}, {'data': {'clearbit': result}})
-                    success('Saved Clearbit results:')
+                    self.db.update_one('email', {'name': arg}, {'data.clearbit': result})
+                    success('Saved Clearbit results')
                 print json.dumps(result, indent=2)
             else:
                 warning('Failed to get Clearbit results (%s)' % arg)
@@ -402,8 +412,8 @@ class Console(cmd2.Cmd):
         result = censys.run(arg)
         if result:
             if self.db.exists('host', {'name': arg}):
-                self.db.update_one('host', {'name': arg}, {'data': {'censys': result}})
-                success('Saved Censys.io results:')
+                self.db.update_one('host', {'name': arg}, {'data.censys': result})
+                success('Saved Censys.io results')
             print json.dumps(result, indent=2)
         else:
             warning('Failed to get Censys IPv4 results (%s)' % arg)
@@ -436,8 +446,8 @@ class Console(cmd2.Cmd):
 
         if result:
             if self.db.exists('host', {'name': arg}):
-                self.db.update_one('host', {'name': arg}, {'data': {'DNS': result}})
-                success('Saved DNS resolution results:')
+                self.db.update_one('host', {'name': arg}, {'data.DNS': result})
+                success('Saved DNS resolution results')
             print json.dumps(result, indent=2)
         else:
             warning('Failed to get DNS resolution results (%s)' % arg)
@@ -460,8 +470,8 @@ class Console(cmd2.Cmd):
 
         if result:
             if self.db.exists('host', {'name': arg}):
-                self.db.update_one('host', {'name': arg}, {'data': {'geoip': result}})
-                success('Saved geoIP results:')
+                self.db.update_one('host', {'name': arg}, {'data.geoip': result})
+                success('Saved geoIP results')
             print json.dumps(result, indent=2)
         else:
             warning('Failed to get freegeoip results (%s)' % arg)
@@ -498,8 +508,8 @@ class Console(cmd2.Cmd):
         result = github.run(arg)
         if result is not None:
             if self.db.exists('user', {'name': arg}):
-                self.db.update_one('user', {'name': arg}, {'data': {'github': result}})
-                success('Saved GitHub results:')
+                self.db.update_one('user', {'name': arg}, {'data.github': result})
+                success('Saved GitHub results')
             print json.dumps(result, indent=2)
         else:
             warning('Failed to get GitHub results (%s)' % arg)
@@ -522,8 +532,8 @@ class Console(cmd2.Cmd):
             result = hackedemails.run(arg)
             if result is not None:
                 if self.db.exists('email', {'name': arg}):
-                    self.db.update_one('email', {'name': arg}, {'data': {'hackedemails': result}})
-                    success('Saved hacked-emails results:')
+                    self.db.update_one('email', {'name': arg}, {'data.hackedemails': result})
+                    success('Saved hacked-emails results')
                 print json.dumps(result, indent=2)
             else:
                 warning('Failed to get hacked-emails results (%s)' % arg)
@@ -548,8 +558,8 @@ class Console(cmd2.Cmd):
             result = hibp.run(arg)
             if result is not None:
                 if self.db.exists('email', {'name': arg}):
-                    self.db.update_one('email', {'name': arg}, {'data': {'hibp': result}})
-                    success('saved HIBP results to db.')
+                    self.db.update_one('email', {'name': arg}, {'data.hibp': result})
+                    success('saved HIBP results')
                 print json.dumps(result, indent=2)
             else:
                 warning('Failed to get HIBP results (%s)' % arg)
@@ -559,12 +569,56 @@ class Console(cmd2.Cmd):
 
     def do_ipinfo(self, arg):
         """Retrieve ipinfo resutls for host"""
-        pass
+        from lib.modules import ipinfo
+
+        answer, result = self.check_session(arg)
+        if answer is not None and result is None:
+            error('Unable to find artifact key in session (%s)' % arg)
+            return
+        elif answer is not None and result is not None:
+            arg = result
+        else:
+            pass
+
+        if is_ipv4(arg) or is_fqdn(arg):
+            result = ipinfo.run(arg)
+            if result is not None:
+                if self.db.exists('host', {'name': arg}):
+                    doc_id = self.db.update_one('host', {'name': arg}, {'data.ipinfo': result})
+                    if doc_id is not None:
+                        success('Saved IPInfo results')
+                print json.dumps(result, indent=2)
+            else:
+                warning('Failed to get IPInfo results (%s)' % arg)
+        else:
+            warning('Must specify IPv4 or FQDN artifact (%s)' % arg)
 
 
     def do_ipvoid(self, arg):
         """Search IPVoid for host"""
-        pass
+        from lib.modules import ipvoid
+
+        answer, result = self.check_session(arg)
+        if answer is not None and result is None:
+            error('Unable to find artifact key in session (%s)' % arg)
+            return
+        elif answer is not None and result is not None:
+            arg = result
+        else:
+            pass
+
+        if is_ipv4(arg) or is_fqdn(arg):
+            result = ipvoid.run(arg)
+            if result is not None:
+                if self.db.exists('host', {'name': arg}):
+                    doc_id = self.db.update_one('host', {'name': arg}, {'data.ipvoid': result})
+                    if doc_id is not None:
+                        success('Saved IPVoid results')
+                print json.dumps(result, indent=2)
+            else:
+                warning('Failed to get IPVoid results (%s)' % arg)
+        else:
+            warning('Must specify IPv4 or FQDN artifact (%s)' % arg)
 
 
     def do_isc(self, arg):
@@ -584,9 +638,9 @@ class Console(cmd2.Cmd):
             result = sans.run(arg)
             if result is not None:
                 if self.db.exists('host', {'name': arg}):
-                    doc_id = self.db.update_one('host', {'name': arg}, {'data': {'isc': result}})
+                    doc_id = self.db.update_one('host', {'name': arg}, {'data.isc': result})
                     if doc_id is not None:
-                        success('Saved SANS ISC results:')
+                        success('Saved SANS ISC results')
                 print json.dumps(result, indent=2)
             else:
                 warning('Failed to get SANS ISC results (%s)' % arg)
@@ -610,9 +664,9 @@ class Console(cmd2.Cmd):
         result = keybase.run(arg)
         if result is not None:
             if self.db.exists('user', {'name': arg}):
-                doc_id = self.db.update_one('user', {'name': arg}, {'data': {'keybase': result}})
+                doc_id = self.db.update_one('user', {'name': arg}, {'data.keybase': result})
                 if doc_id is not None:
-                    success('Saved Keybase results:')
+                    success('Saved Keybase results')
             print json.dumps(result, indent=2)
         else:
             warning('Failed to get Keybase results (%s)' % arg)
@@ -646,8 +700,8 @@ class Console(cmd2.Cmd):
             result = nmap.run(arg)
             if len(result['ports']) > 0:
                 if self.db.exists('host', {'name': arg}):
-                    self.db.update_one('host', {'name': arg}, {'data': {'nmap': result}})
-                    success('Saved Nmap results:')
+                    self.db.update_one('host', {'name': arg}, {'data.nmap': result})
+                    success('Saved Nmap results')
                 for item in result['ports']:
                     print item
             else:
@@ -675,15 +729,6 @@ class Console(cmd2.Cmd):
         """Search Reddit for active username"""
         pass
 
-
-    def do_rss(self, arg):
-        """Manage RSS feeds: rss ls, rss add <feed>, rss rm <feed>, rss watch <feed>"""
-        pass
-
-
-    def do_scribd(self, arg):
-        """Search Scribd for active username"""
-        pass
 
     def do_securitynews(self, arg):
         """Get current cybersecurity headlines from Google News"""
@@ -721,8 +766,8 @@ class Console(cmd2.Cmd):
 
         if result is not None:
             if self.db.exists('host', {'name': arg}):
-                self.db.update_one('host', {'name': arg}, {'data': {'shodan': result}})
-                success('Saved Shodan results:')
+                self.db.update_one('host', {'name': arg}, {'data.shodan': result})
+                success('Saved Shodan results')
             print json.dumps(result, indent=2)
         else:
             error('Failed to retrieve Shodan results: %s' % arg)
@@ -787,8 +832,8 @@ class Console(cmd2.Cmd):
             result = virustotal.run_host(arg)
             if result is not None:
                 if self.db.exists('host', {'name': arg}):
-                    self.db.update_one('host', {'name': arg}, {'data': {'virustotal': result}})
-                    success('Saved VirusTotal results:')
+                    self.db.update_one('host', {'name': arg}, {'data.virustotal': result})
+                    success('Saved VirusTotal results')
                 print json.dumps(result, indent=2)
             else:
                 warning('Failed to get VirusTotal results (%s)' % arg)
@@ -796,7 +841,7 @@ class Console(cmd2.Cmd):
             result = virustotal.run_ip(arg)
             if result is not None:
                 if self.db.exists('host', {'name': arg}):
-                    self.db.update_one('host', {'name': arg}, {'data': {'virustotal': result}})
+                    self.db.update_one('host', {'name': arg}, {'data.virustotal': result})
                     success('Saved VirusTotal results:')
                 print json.dumps(result, indent=2)
             else:
@@ -832,8 +877,8 @@ class Console(cmd2.Cmd):
 
             if result is not None:
                 if self.db.exists('host', {'name': arg}):
-                    self.db.update_one('host', {'name': arg}, {'data': {'whois': result}})
-                    success('Saved WHOIS results:')
+                    self.db.update_one('host', {'name': arg}, {'data.whois': result})
+                    success('Saved WHOIS results')
                 print json.dumps(result, indent=2)
             else:
                 warning('Failed to get WHOIS results (%s)' % arg)
@@ -858,9 +903,9 @@ class Console(cmd2.Cmd):
         result = whoismind.run(arg)
         if result is not None:
             if self.db.exists('user', {'name': arg}):
-                doc_id = self.db.update_one('user', {'name': arg}, {'data': {'keybase': result}})
+                doc_id = self.db.update_one('user', {'name': arg}, {'data.whoismind': result})
                 if doc_id is not None:
-                    success('Saved WhoisMind results:')
+                    success('Saved WhoisMind results')
             print json.dumps(result, indent=2)
         else:
             warning('Failed to get WhoisMind results (%s)' % arg)
