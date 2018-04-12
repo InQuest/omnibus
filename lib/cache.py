@@ -9,8 +9,6 @@
 from redis import Redis
 
 from common import error
-from common import warning
-from common import success
 
 from common import utf_decode
 from common import utf_encode
@@ -53,6 +51,7 @@ class RedisCache(object):
         except Exception as err:
             error('[redis] failed to receive message from queue %s (error: %s)' % (queue_name, str(err)))
             pass
+
 
     def delete(self, names):
         """ Remove one or more keys by name """
@@ -129,4 +128,3 @@ class RedisCache(object):
     def flush(self):
         """ Flush opened database entirely """
         self.db.flushdb()
-

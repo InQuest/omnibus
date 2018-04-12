@@ -3,6 +3,11 @@
         "token": "",
         "secret": ""},
     "github": "",
+    "fullcontact": "",
     "shodan": "",
+    "passivetotal": {
+      "user": "",
+      "token": ""
+    },
     "virustotal": ""
 }
