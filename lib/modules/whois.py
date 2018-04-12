@@ -3,10 +3,22 @@
 # omnibus - deadbits.
 # whois module
 ##
+from whois import whois
 from ipwhois import IPWhois
 
 
-def run(host):
+def host_run(host):
+    results = None
+
+    try:
+        results = whois(host)
+    except:
+        return results
+
+    return results
+
+
+def ip_run(host):
     results = None
     whois = IPWhois(host)
 
