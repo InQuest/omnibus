@@ -5,7 +5,7 @@
 ##
 import BeautifulSoup
 
-from http import http_get
+from http import get
 
 
 def run(host):
@@ -14,7 +14,7 @@ def run(host):
     headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
     url = 'http://urlvoid.com/scan/%s/' % host
     try:
-        status, response = http_get(url, headers=headers)
+        status, response = get(url, headers=headers)
     except:
         return result
 

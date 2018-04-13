@@ -5,7 +5,7 @@
 ##
 import xml.etree.ElementTree as ET
 
-from http import http_get
+from http import get
 
 
 def vuln_news():
@@ -13,7 +13,7 @@ def vuln_news():
     headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
 
     try:
-        status, response = http_get(url, headers=headers)
+        status, response = get(url, headers=headers)
     except:
         return None
 
@@ -38,7 +38,7 @@ def security_news():
     headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
 
     try:
-        status, response = http_get(url, headers=headers)
+        status, response = get(url, headers=headers)
     except:
         return None
 

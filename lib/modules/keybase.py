@@ -3,7 +3,7 @@
 # omnibus - deadbits.
 # keybase user search
 ##
-from http import http_get
+from http import get
 
 
 def run(user):
@@ -11,7 +11,7 @@ def run(user):
     url = 'https://keybase.io/_/api/1.0/user/lookup.json?usernames=%s' % user
 
     try:
-        status, response = http_get(url)
+        status, response = get(url)
     except:
         return result
 

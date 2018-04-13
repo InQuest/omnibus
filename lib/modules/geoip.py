@@ -3,7 +3,7 @@
 # omnibus - deadbits.
 # geolocation for hosts
 ##
-from http import http_get
+from http import get
 
 from common import error
 
@@ -17,7 +17,7 @@ def run(host):
     }
 
     try:
-        status, response = http_get(url, headers=headers)
+        status, response = get(url, headers=headers)
     except:
         error('failed to get GeoIP results (%s)' % host)
         return results

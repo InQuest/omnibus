@@ -5,7 +5,7 @@
 ##
 from requests.auth import HTTPBasicAuth
 
-from http import http_get
+from http import get
 
 from common import get_apikey
 
@@ -19,7 +19,7 @@ def run(host):
     token = key['key']
 
     try:
-        status, response = http_get(url, auth=HTTPBasicAuth(user, token))
+        status, response = get(url, auth=HTTPBasicAuth(user, token))
     except:
         return result
 

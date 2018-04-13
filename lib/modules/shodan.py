@@ -3,7 +3,7 @@
 # omnibus - deadbits.
 # shodan search
 ##
-from http import http_get
+from http import get
 
 from common import get_apikey
 
@@ -15,7 +15,7 @@ def fqdn_run(host):
     headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus'}
 
     try:
-        status, response = http_get(url, headers=headers)
+        status, response = get(url, headers=headers)
     except:
         return result
 
@@ -32,7 +32,7 @@ def ip_run(host):
     headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus'}
 
     try:
-        status, response = http_get(url, headers=headers)
+        status, response = get(url, headers=headers)
     except:
         return result
 

@@ -3,7 +3,7 @@
 # omnibus - deadbits.
 # virustotal module
 ##
-from http import http_get
+from http import get
 
 from common import is_hash
 from common import is_ipv4
@@ -21,7 +21,7 @@ def run_ip(ip):
         return None
 
     try:
-        status, response = http_get(url, params=parameters)
+        status, response = get(url, params=parameters)
     except:
         return result
 
@@ -44,7 +44,7 @@ def run_fqdn(domain):
         return None
 
     try:
-        status, response = http_get(url, params=parameters)
+        status, response = get(url, params=parameters)
     except:
         return result
 
@@ -66,7 +66,7 @@ def run_hash(file_hash):
         return None
 
     try:
-        status, response = http_get(url, params=parameters)
+        status, response = get(url, params=parameters)
     except:
         return result
 

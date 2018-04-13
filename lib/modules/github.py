@@ -3,7 +3,7 @@
 # omnibus - deadbits
 # search github for active users
 ##
-from http import http_get
+from http import get
 
 from common import error
 
@@ -14,7 +14,7 @@ def run(username):
     headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
 
     try:
-        status, response = http_get(url, headers=headers)
+        status, response = get(url, headers=headers)
     except:
         error('failed to get Github results (%s)' % username)
         return results

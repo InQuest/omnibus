@@ -5,7 +5,7 @@
 ##
 import json
 
-from http import http_get
+from http import get
 
 from common import warning
 from common import get_apikey
@@ -21,7 +21,7 @@ def run(email_address):
     }
 
     try:
-        status, response = http_get(url, headers=headers)
+        status, response = get(url, headers=headers)
     except:
         return result
 

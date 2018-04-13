@@ -3,7 +3,7 @@
 # omnibus - deadbits
 # haveibeenpwned
 ##
-from http import http_get
+from http import get
 
 from common import warning
 
@@ -14,7 +14,7 @@ def run(email_addr):
     headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
 
     try:
-        status, response = http_get(url, headers=headers)
+        status, response = get(url, headers=headers)
     except:
         return results
 

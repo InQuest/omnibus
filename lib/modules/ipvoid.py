@@ -5,7 +5,7 @@
 ##
 import BeautifulSoup
 
-from http import http_get
+from http import get
 
 from common import is_ipv4
 
@@ -18,7 +18,7 @@ def run(ip):
     headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
     url = 'http://ipvoid.com/scan/%s/' % ip
     try:
-        status, response = http_get(url, headers=headers)
+        status, response = get(url, headers=headers)
     except:
         return result
 

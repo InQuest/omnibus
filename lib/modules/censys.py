@@ -3,7 +3,8 @@
 # omnibus - deadbits.
 # censys.io module
 ##
-from http import http_get
+
+from http import get
 
 from common import get_apikey
 
@@ -16,7 +17,7 @@ def run(host):
 
 
     try:
-        status, response = http_get(url, auth=(key['token'], key['secret']), headers=headers)
+        status, response = get(url, auth=(key['token'], key['secret']), headers=headers)
     except:
         return result
 

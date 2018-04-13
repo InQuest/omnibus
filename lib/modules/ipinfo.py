@@ -3,7 +3,7 @@
 # omnibus - deadbits.
 # ipinfo module
 ##
-from http import http_get
+from http import get
 
 
 def run(host):
@@ -12,7 +12,7 @@ def run(host):
     headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus'}
 
     try:
-        status, response = http_get(url, headers=headers)
+        status, response = get(url, headers=headers)
     except:
         return results
 

@@ -9,52 +9,52 @@ import warnings
 from requests.packages.urllib3 import exceptions
 
 
-class HTTP(object):
-    def __init__(self, proxy=None):
-        if proxy is not None:
-            self.proxy = {
-                'http': 'socks5://%s' % proxy,
-                'https': 'socks5://%s' % proxy
-            }
+# class HTTP(object):
+#    def __init__(self, proxy=None):
+#        if proxy is not None:
+#            self.proxy = {
+#                'http': 'socks5://%s' % proxy,
+#                'https': 'socks5://%s' % proxy
+#            }
+#        else:
+#            self.proxy = proxy
+
+
+def post(*args, **kwargs):
+    kwargs['verify'] = False
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', exceptions.InsecureRequestWarning)
+        warnings.simplefilter('ignore', exceptions.InsecurePlatformWarning)
+        # if isinstance(self.proxy, dict):
+        #    kwargs['proxies'] = self.proxy
+
+        try:
+            req = requests.post(*args, **kwargs)
+        except:
+            return (False, None)
+
+        if req.status_code == 200:
+            return (True, req)
         else:
-            self.proxy = proxy
+            return (False, req)
 
 
-    def post(self, *args, **kwargs):
-        kwargs['verify'] = False
+def get(*args, **kwargs):
+    kwargs['verify'] = False
 
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore', exceptions.InsecureRequestWarning)
-            warnings.simplefilter('ignore', exceptions.InsecurePlatformWarning)
-            if isinstance(self.proxy, dict):
-                kwargs['proxies'] = self.proxy
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', exceptions.InsecureRequestWarning)
+        warnings.simplefilter('ignore', exceptions.InsecurePlatformWarning)
+        # if isinstance(self.proxy, dict):
+        #    kwargs['proxies'] = self.proxy
 
-            try:
-                req = requests.post(*args, **kwargs)
-            except:
-                return (False, None)
+        try:
+            req = requests.get(*args, **kwargs)
+        except:
+            return (False, None)
 
-            if req.status_code == 200:
-                return (True, req)
-            else:
-                return (False, req)
-
-
-    def get(self, *args, **kwargs):
-        kwargs['verify'] = False
-
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore', exceptions.InsecureRequestWarning)
-            warnings.simplefilter('ignore', exceptions.InsecurePlatformWarning)
-            if isinstance(self.proxy, dict):
-                kwargs['proxies'] = self.proxy
-
-            try:
-                req = requests.get(*args, **kwargs)
-            except:
-                return (False, None)
-
-            if req.status_code == 200:
-                return (True, req)
-            else:
-                return (False, req)
+        if req.status_code == 200:
+            return (True, req)
+        else:
+            return (False, req)
