@@ -10,19 +10,18 @@ from redis import Redis
 
 from common import error
 
+from common import get_option
+
 from common import utf_decode
 from common import utf_encode
 
 
 class RedisCache(object):
-    def __init__(self):
-        self.host = '127.0.0.1'
-        self.port = 6379
-        self.database = 1
-
-        self.ttl = 9999999999999
-        if self.ttl is not None:
-            self.ttl = int(self.ttl)
+    def __init__(self, config):
+        self.host = get_option('redis', 'host', config)
+        self.port = int(get_option('redis', 'port', config))
+        self.database = int(get_option('redis', 'db', config))
+        self.ttl = 999999
 
         try:
             self.db = Redis(db=self.database, host=self.host,
