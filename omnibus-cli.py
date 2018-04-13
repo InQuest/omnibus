@@ -1,29 +1,25 @@
 #!/usr/bin/env pytohn
 ##
-# OSINT Omnibus
-# main cli toolkit
+# The OSINT Omnibus
 # --
-# https://www.deadbits.org - https://github.com/deadbits
+# InQuest, LLC. (2018)
+# https://github.com/InQuest/omnibus
+# https://www.inquest.net
+# --
+# Please see docs directory for license information.
 ##
-
 import os
-import cmd2
 import sys
+import cmd2
 import json
-import datetime
 import argparse
-import functools
 
-from lib import cache
-from lib import mongo
 from lib import storage
+from lib import asciiart
 
-from lib.common import is_ipv4
-from lib.common import is_ipv6
-from lib.common import is_fqdn
-from lib.common import is_email
-from lib.common import is_hash
-from lib.common import is_btc_addr
+from lib.mongo import Mongo
+from lib.cache import RedisCache
+from lib.dispatch import Dispatch
 
 from lib.common import info
 from lib.common import mkdir
@@ -32,7 +28,12 @@ from lib.common import running
 from lib.common import success
 from lib.common import warning
 
+from lib.common import jsondate
+from lib.common import lookup_key
+from lib.common import detect_type
+
 from lib.common import read_file
+from lib.common import get_option
 
 from lib.models import Hash
 from lib.models import Host
@@ -40,34 +41,10 @@ from lib.models import User
 from lib.models import Email
 from lib.models import BitcoinAddress
 
-from lib.modules import cymon
-from lib.modules import clearbit
-from lib.modules import censys
-from lib.modules import dshield
-from lib.modules import dnsbrute
-from lib.modules import dnsresolve
-from lib.modules import geoip
-from lib.modules import gist
-from lib.modules import gitlab
-from lib.modules import github
-from lib.modules import hackedemails
-from lib.modules import hibp
-from lib.modules import ipinfo
-from lib.modules import ipvoid
-from lib.modules import sans
-from lib.modules import keybase
-from lib.modules import nmap
-from lib.modules import securitynews
-from lib.modules import shodan
-from lib.modules import urlvoid
-from lib.modules import virustotal
-from lib.modules import whois
-from lib.modules import whoismind
-
 
 help_dict = {
     'general': [
-        'help', 'history', 'quit', 'cat apikeys', 'add apikey'
+        'help', 'history', 'quit', 'cat apikeys', 'add apikey', 'banner'
     ],
     'artifacts': [
         'cat', 'rm', 'open', 'add source', 'add note'
@@ -83,23 +60,19 @@ help_dict = {
     ]
 }
 
-jsondate = lambda obj: obj.isoformat() if isinstance(obj, datetime) else None
-
 
 class Console(cmd2.Cmd):
     def __init__(self):
         cmd2.Cmd.__init__(self,
             completekey='tab',
-            persistent_history_file='~/.omnibus_hist',
-            persistent_history_length=500)
+            persistent_history_file=get_option('core', 'hist_file', config),
+            persistent_history_length=int(get_option('core', 'hist_size', config)))
 
         self.allow_cli_args = True
         self.allow_redirection = True
         self.prompt = 'omnibus >> '
         self.redirector = '>'
         self.quit_on_sigint = False
-        self.db = mongo.Mongo()
-        self.session = None
 
         del cmd2.Cmd.do_alias
         del cmd2.Cmd.do_edit
@@ -112,6 +85,10 @@ class Console(cmd2.Cmd):
         del cmd2.Cmd.do_shortcuts
         del cmd2.Cmd.do_unalias
         del cmd2.Cmd.do__relative_load
+
+        self.db = Mongo(config)
+        self.dispatch = Dispatch(self.db)
+        self.session = None
 
 
     def sigint_handler(self, signum, frame):
@@ -135,51 +112,6 @@ class Console(cmd2.Cmd):
 
         warning('Closing Omnibus shell ...')
         return self._STOP_AND_EXIT
-
-
-    def check_session(self, key):
-        """ Attempt to lookup an argument as a key in Redis
-
-        Return key's value if successfully found """
-        result = None
-        is_key = False
-        if self.session is None:
-            return result
-
-        try:
-            key = int(key)
-            is_key = True
-            result = self.session.get(key)
-        except:
-            pass
-
-        return (is_key, result)
-
-
-    def detect_type(self, arg):
-        """ Determine type of given argument """
-        if is_ipv4(arg):
-            return 'host'
-        elif is_fqdn(arg):
-            return 'host'
-        elif is_email(arg):
-            return 'email'
-        elif is_hash(arg):
-            return 'hash'
-        elif is_btc_addr(arg):
-            return 'btc'
-        else:
-            return 'user'
-
-
-    def get_cached_item_by_id(self, artifact_id):
-        """ Return value of cached artifact by session ID """
-        if self.session is None:
-            return None
-
-        if self.session.exists(int(artifact_id)):
-            return self.session.get(int(artifact_id))
-        return None
 
 
     def do_clear(self, arg):
@@ -220,9 +152,14 @@ class Console(cmd2.Cmd):
         info('Omnibus supports command redirection to output files using the ">" character. For example, "cat host zeroharbor.org > zh.json" will pipe the output of the cat command to ./zh.json on disk.')
 
 
+    def do_banner(self, arg):
+        """Display random ascii art banner"""
+        print(asciiart.show_banner())
+
+
     def do_session(self, arg):
         """Open a new session"""
-        self.session = cache.RedisCache()
+        self.session = RedisCache(config)
         if self.session.db is None:
             error('Failed to connect to Redis back-end. Please ensure the Redis service is running')
         else:
@@ -249,38 +186,33 @@ class Console(cmd2.Cmd):
 
         Usage: find <artifact name>
                find <session id> """
-        answer, result = self.check_session(arg)
-        if answer and result is None:
+        is_key, value = lookup_key(self.session, arg)
+
+        if is_key and value is None:
             error('Unable to find artifact key in session (%s)' % arg)
             return
-        elif answer and result is not None:
-            arg = result
+        elif is_key and value is not None:
+            arg = value
         else:
             pass
 
-        info('Searching for artifact (%s)' % arg)
+        artifact_type = detect_type(arg)
 
-        if is_ipv4(arg) or is_ipv6(arg) or is_fqdn(arg):
-            res = self.db.find('host', {'name': arg}, one=True)
-        elif is_email(arg):
-            res = self.db.find('email', {'name': arg}, one=True)
-        elif is_hash(arg):
-            res = self.db.find('hash', {'name': arg}, one=True)
-        elif is_btc_addr(arg):
-            res = self.db.find('btc', {'name': arg}, one=True)
-        else:
-            res = self.db.find('user', {'name': arg}, one=True)
+        running('Searching for artifact (%s)' % arg)
 
+        res = self.db.find(artifact_type, {'name': arg}, one=True)
         if res:
-            print json.dumps(res, indent=2)
+            print(json.dumps(res, indent=4, default=jsondate))
 
 
     def do_wipe(self, arg):
         """Clear currently active artifacts """
-        info('Clearing active artifacts from cache ...')
-        self.session.flush()
-        success('cache flushed succesfully')
-
+        if self.session is not None:
+            info('Clearing active artifacts from cache ...')
+            self.session.flush()
+            success('Artifact cache cleared')
+        else:
+            warning('No active session; start a new session by running the "session" command')
 
     def do_rm(self, arg):
         """Remove artifact from session by ID
@@ -305,17 +237,27 @@ class Console(cmd2.Cmd):
     def do_new(self, arg):
         """Create a new artifact
 
-        Usage: new <name> """
-        _type = self.detect_type(arg)
+        Artifacts are created by their name. An IP address artifacts name would be the IP address itself,
+        an FQDN artifacts name is the domain name, and so on.
+
+        Usage: new <artifact name> """
+        _type = detect_type(arg)
 
         if _type == 'email':
             item = Email(email_address=arg)
+
         elif _type == 'host':
             item = Host(host=arg)
+
         elif _type == 'user':
             item = User(username=arg)
+
         elif _type == 'hash':
             item = Hash(hash=arg)
+
+        elif _type == 'bitcoin':
+            item = BitcoinAddress(addr=arg)
+
         else:
             warning('Must specify one of type: email, host, user, bitcoin')
             return
@@ -326,7 +268,7 @@ class Console(cmd2.Cmd):
                 success('Indexed new artifact for analysis. MongoDB ID (%s)' % _id)
 
         if self.session is None:
-            self.session = cache.RedisCache()
+            self.session = RedisCache(config)
             self.session.set(1, arg)
             success('Opened new session')
             print('Artifact ID: 1')
@@ -343,17 +285,18 @@ class Console(cmd2.Cmd):
         """Remove artifact from database by name or ID
 
         Usage: delete <name> """
-        answer, result = self.check_session(arg)
-        if answer and result is None:
+        is_key, value = lookup_key(self.session, arg)
+
+        if is_key and value is None:
             error('Unable to find artifact key in session (%s)' % arg)
             return
-        elif answer and result is not None:
-            arg = result
+        elif is_key and value is not None:
+            arg = value
         else:
             pass
 
-        _type = self.detect_type(arg)
-        self.db.delete_one(_type, {'name': arg})
+        artifact_type = detect_type(arg)
+        self.db.delete_one(artifact_type, {'name': arg})
 
 
     def do_cat(self, arg):
@@ -365,17 +308,18 @@ class Console(cmd2.Cmd):
             data = json.load(open(api_keys, 'rb'))
             print json.dumps(data, indent=2)
         else:
-            answer, result = self.check_session(arg)
-            if answer and result is None:
+            is_key, value = lookup_key(self.session, arg)
+
+            if is_key and value is None:
                 error('Unable to find artifact key in session (%s)' % arg)
                 return
-            elif answer and result is not None:
-                arg = result
+            elif is_key and value is not None:
+                arg = value
             else:
                 pass
 
-            _type = self.detect_type(arg)
-            result = self.db.find(_type, {'name': arg}, one=True)
+            artifact_type = detect_type(arg)
+            result = self.db.find(artifact_type, {'name': arg}, one=True)
             if len(result) == 0:
                 info('No entry found for artifact (%s)' % arg)
             else:
@@ -383,47 +327,58 @@ class Console(cmd2.Cmd):
 
 
     def do_open(self, arg):
-        """Load text file list of artifacts to be created: open <path/to/file.txt> """
+        """Load text file list of artifacts
+
+        Command will detect each line items artifact type, create the artifact,
+        and add it to the current session if there is one.
+
+        Usage: open <path/to/file.txt> """
         if not os.path.exists(arg):
             warning('Cannot find list file on disk (%s)' % arg)
             return
 
         artifacts = read_file(arg, True)
         for artifact in artifacts:
-            if is_ipv4(artifact) or is_fqdn(artifact) or is_ipv6(artifact):
+            a = None
+            artifact_type = detect_type(artifact)
+
+            if artifact_type == 'host':
                 a = Host(host=artifact)
 
-                if not self.db.exists('host', {'name': artifact}):
-                    self.db.insert_one('host', a)
+                if not self.db.exists(artifact_type, {'name': artifact}):
+                    self.db.insert_one(artifact_type, a)
 
-            elif is_email(artifact):
+            elif artifact_type == 'email':
                 a = Email(artifact)
 
-                if not self.db.exists('email', {'name': artifact}):
-                    self.db.insert_one('email', a)
+                if not self.db.exists(artifact_type, {'name': artifact}):
+                    self.db.insert_one(artifact_type, a)
 
-            elif is_hash(artifact):
+            elif artifact_type == 'hash':
                 a = Hash(artifact)
 
-                if not self.db.exists('hash', {'name': artifact}):
-                    self.db.insert_one('hash', a)
+                if not self.db.exists(artifact_type, {'name': artifact}):
+                    self.db.insert_one(artifact_type, a)
 
-            elif is_btc_addr(artifact):
+            elif artifact_type == 'btc':
                 a = BitcoinAddress(artifact)
 
-                if not self.db.exists('btc', {'name': artifact}):
-                    self.db.insert_one('btc', a)
+                if not self.db.exists(artifact_type, {'name': artifact}):
+                    self.db.insert_one(artifact_type, a)
 
-            else:
-                info('Cannot determine type for artifact. Treating as username (%s)' % artifact)
+            elif artifact_type == 'user':
                 a = User(artifact)
 
-                if not self.db.exists('user', {'name': artifact}):
-                    self.db.insert_one('user', a)
+                if not self.db.exists(artifact_type, {'name': artifact}):
+                    self.db.insert_one(artifact_type, a)
 
-            if self.session is not None:
-                _id = self.session.count_queued() + 1
-                self.session.set(_id, artifact)
+            else:
+                info('Cannot determine type for artifact (%s)' % artifact)
+
+            if a is not None:
+                if self.session is not None:
+                    _id = self.session.count_queued() + 1
+                    self.session.set(_id, artifact)
 
         success('Finished loading artifact list')
 
@@ -433,7 +388,7 @@ class Console(cmd2.Cmd):
 
         Usage: report <artifact name>
                report <session id> """
-        _type = self.detect_type(arg)
+        _type = detect_type(arg)
 
         result = self.db.find(_type, {'name': arg}, one=True)
         if len(result) == 0:
@@ -459,304 +414,82 @@ class Console(cmd2.Cmd):
 
     def do_clearbit(self, arg):
         """Search Clearbit for email address """
-        answer, result = self.check_session(arg)
-        if answer and result is None:
-            error('Unable to find artifact key in session (%s)' % arg)
-            return
-        elif answer and result is not None:
-            arg = result
-        else:
-            pass
-
-        if is_email(arg):
-            from lib.modules import clearbit
-
-            result = clearbit.run(arg)
-            if result:
-                if self.db.exists('email', {'name': arg}):
-                    self.db.update_one('email', {'name': arg}, {'data.clearbit': result})
-                    success('Saved Clearbit results')
-                print(json.dumps(result, indent=2, default=jsondate))
-            else:
-                warning('Failed to get Clearbit results (%s)' % arg)
-        else:
-            warning('Failed to get Clearbit results (%s)' % arg)
+        self.dispatch.submit(self.session, 'clearbit', arg)
 
 
     def do_censys(self, arg):
-        """ Search Censys for IPv4 address """
-        from lib.modules import censys
-
-        answer, result = self.check_session(arg)
-        if answer and result is None:
-            error('Unable to find artifact key in session (%s)' % arg)
-            return
-        elif answer and result is not None:
-            arg = result
-        else:
-            pass
-
-        result = censys.run(arg)
-        if result:
-            if self.db.exists('host', {'name': arg}):
-                self.db.update_one('host', {'name': arg}, {'data.censys': result})
-                success('Saved Censys.io results')
-            print(json.dumps(result, indent=2, default=jsondate))
-        else:
-            warning('Failed to get Censys IPv4 results (%s)' % arg)
+        """Search Censys for IPv4 address """
+        self.dispatch.submit(self.session, 'censys', arg)
 
 
     def do_cymon(self, arg):
-        """ Search Cymon for host """
-        pass
+        """Search Cymon for host """
+        self.dispatch.submit(self.session, 'cymon', arg)
 
 
     def do_dnsbrute(self, arg):
-        """ Enumerate DNS subdomains of FQDN """
+        """Enumerate DNS subdomains of FQDN """
         pass
 
 
     def do_dnsresolve(self, arg):
-        """ Retrieve DNS records for host artifact """
-        from lib.modules import dnsresolve
-
-        answer, result = self.check_session(arg)
-        if answer and result is None:
-            error('Unable to find artifact key in session (%s)' % arg)
-            return
-        elif answer and result is not None:
-            arg = result
-        else:
-            pass
-
-        result = dnsresolve.run(arg)
-
-        if result:
-            if self.db.exists('host', {'name': arg}):
-                self.db.update_one('host', {'name': arg}, {'data.DNS': result})
-                success('Saved DNS resolution results')
-            print(json.dumps(result, indent=2, default=jsondate))
-        else:
-            warning('Failed to get DNS resolution results (%s)' % arg)
+        """Retrieve DNS records for host """
+        self.dispatch.submit(self.session, 'dnsresolve', arg)
 
 
     def do_geoip(self, arg):
-        """ Retrieve Geolocation details for host """
-        from lib.modules import geoip
-
-        answer, result = self.check_session(arg)
-        if answer and result is None:
-            error('Unable to find artifact key in session (%s)' % arg)
-            return
-        elif answer and result is not None:
-            arg = result
-        else:
-            pass
-
-        result = geoip.run(arg)
-
-        if result:
-            if self.db.exists('host', {'name': arg}):
-                self.db.update_one('host', {'name': arg}, {'data.geoip': result})
-                success('Saved geoIP results')
-            print(json.dumps(result, indent=2, default=jsondate))
-        else:
-            warning('Failed to get freegeoip results (%s)' % arg)
+        """Retrieve Geolocation details for host """
+        self.dispatch.submit(self.session, 'geoip', arg)
 
 
     def do_fullcontact(self, arg):
-        """ Search FullContact for email address """
+        """Search FullContact for email address """
         pass
 
 
     def do_gist(self, arg):
-        """ Search Github Gist's for artifact as string """
+        """Search Github Gist's for artifact as string """
         pass
 
 
     def do_gitlab(self, arg):
-        """ Check Gitlab for active username """
+        """Check Gitlab for active username """
         pass
 
 
     def do_github(self, arg):
         """Check GitHub for active username"""
-        from lib.modules import github
-
-        answer, result = self.check_session(arg)
-        if answer and result is None:
-            error('Unable to find artifact key in session (%s)' % arg)
-            return
-        elif answer and result is not None:
-            arg = result
-        else:
-            pass
-
-        result = github.run(arg)
-        if result is not None:
-            if self.db.exists('user', {'name': arg}):
-                self.db.update_one('user', {'name': arg}, {'data.github': result})
-                success('Saved GitHub results')
-            print(json.dumps(result, indent=2, default=jsondate))
-        else:
-            warning('Failed to get GitHub results (%s)' % arg)
+        self.dispatch.submit(self.session, 'github', arg)
 
 
     def do_hackedemails(self, arg):
         """Check hacked-emails.com for email address"""
-        from lib.modules import hackedemails
-
-        answer, result = self.check_session(arg)
-        if answer and result is None:
-            error('Unable to find artifact key in session (%s)' % arg)
-            return
-        elif answer and result is not None:
-            arg = result
-        else:
-            pass
-
-        if is_email(arg):
-            result = hackedemails.run(arg)
-            if result is not None:
-                if self.db.exists('email', {'name': arg}):
-                    self.db.update_one('email', {'name': arg}, {'data.hackedemails': result})
-                    success('Saved hacked-emails results')
-                print(json.dumps(result, indent=2, default=jsondate))
-            else:
-                warning('Failed to get hacked-emails results (%s)' % arg)
-        else:
-            error('Must specify email address')
+        self.dispatch.submit(self.session, 'hackedemails', arg)
 
 
     def do_hibp(self, arg):
         """Check HaveIBeenPwned for email address"""
-        from lib.modules import hibp
-
-        answer, result = self.check_session(arg)
-        if answer and result is None:
-            error('Unable to find artifact key in session (%s)' % arg)
-            return
-        elif answer and result is not None:
-            arg = result
-        else:
-            pass
-
-        if is_email(arg):
-            result = hibp.run(arg)
-            if result is not None:
-                if self.db.exists('email', {'name': arg}):
-                    self.db.update_one('email', {'name': arg}, {'data.hibp': result})
-                    success('saved HIBP results')
-                print(json.dumps(result, indent=2, default=jsondate))
-            else:
-                warning('Failed to get HIBP results (%s)' % arg)
-        else:
-            error('Must specify email address')
+        self.dispatch.submit(self.session, 'hibp', arg)
 
 
     def do_ipinfo(self, arg):
         """Retrieve ipinfo resutls for host"""
-        from lib.modules import ipinfo
-
-        answer, result = self.check_session(arg)
-        if answer and result is None:
-            error('Unable to find artifact key in session (%s)' % arg)
-            return
-        elif answer and result is not None:
-            arg = result
-        else:
-            pass
-
-        if is_ipv4(arg) or is_fqdn(arg):
-            result = ipinfo.run(arg)
-            if result is not None:
-                if self.db.exists('host', {'name': arg}):
-                    doc_id = self.db.update_one('host', {'name': arg}, {'data.ipinfo': result})
-                    if doc_id is not None:
-                        success('Saved IPInfo results')
-                print(json.dumps(result, indent=2, default=jsondate))
-            else:
-                warning('Failed to get IPInfo results (%s)' % arg)
-        else:
-            warning('Must specify IPv4 or FQDN artifact (%s)' % arg)
+        self.dispatch.submit(self.session, 'ipinfo', arg)
 
 
     def do_ipvoid(self, arg):
         """Search IPVoid for host"""
-        from lib.modules import ipvoid
-
-        answer, result = self.check_session(arg)
-        if answer and result is None:
-            error('Unable to find artifact key in session (%s)' % arg)
-            return
-        elif answer and result is not None:
-            arg = result
-        else:
-            pass
-
-        if is_ipv4(arg) or is_fqdn(arg):
-            result = ipvoid.run(arg)
-            if result is not None:
-                if self.db.exists('host', {'name': arg}):
-                    doc_id = self.db.update_one('host', {'name': arg}, {'data.ipvoid': result})
-                    if doc_id is not None:
-                        success('Saved IPVoid results')
-                print(json.dumps(result, indent=2, default=jsondate))
-            else:
-                warning('Failed to get IPVoid results (%s)' % arg)
-        else:
-            warning('Must specify IPv4 or FQDN artifact (%s)' % arg)
+        self.dispatch.submit(self.session, 'ipvoid', arg)
 
 
     def do_isc(self, arg):
         """Search SANS ISC for host"""
-        from lib.modules import sans
-
-        answer, result = self.check_session(arg)
-        if answer and result is None:
-            error('Unable to find artifact key in session (%s)' % arg)
-            return
-        elif answer and result is not None:
-            arg = result
-        else:
-            pass
-
-        if is_ipv4(arg) or is_fqdn(arg):
-            result = sans.run(arg)
-            if result is not None:
-                if self.db.exists('host', {'name': arg}):
-                    doc_id = self.db.update_one('host', {'name': arg}, {'data.isc': result})
-                    if doc_id is not None:
-                        success('Saved SANS ISC results')
-                print(json.dumps(result, indent=2, default=jsondate))
-            else:
-                warning('Failed to get SANS ISC results (%s)' % arg)
-        else:
-            warning('Must specify IPv4 or FQDN artifact (%s)' % arg)
+        self.dispatch.submit(self.session, 'sans', arg)
 
 
     def do_keybase(self, arg):
         """Search Keybase for active username"""
-        from lib.modules import keybase
-
-        answer, result = self.check_session(arg)
-        if answer and result is None:
-            error('Unable to find artifact key in session (%s)' % arg)
-            return
-        elif answer and result is not None:
-            arg = result
-        else:
-            pass
-
-        result = keybase.run(arg)
-        if result is not None:
-            if self.db.exists('user', {'name': arg}):
-                doc_id = self.db.update_one('user', {'name': arg}, {'data.keybase': result})
-                if doc_id is not None:
-                    success('Saved Keybase results')
-            print(json.dumps(result, indent=2, default=jsondate))
-        else:
-            warning('Failed to get Keybase results (%s)' % arg)
+        self.dispatch.submit(self.session, 'keybase', arg)
 
 
     def do_monitor(self, arg):
@@ -771,35 +504,12 @@ class Console(cmd2.Cmd):
 
     def do_nmap(self, arg):
         """Run NMap discovery scan against host"""
-        from lib.modules import nmap
-
-        answer, result = self.check_session(arg)
-        if answer and result is None:
-            error('Unable to find artifact key in session (%s)' % arg)
-            return
-        elif answer and result is not None:
-            arg = result
-        else:
-            pass
-
-        if is_ipv4(arg) or is_fqdn(arg):
-            running('starting NMap discovery scan ...')
-            result = nmap.run(arg)
-            if len(result['ports']) > 0:
-                if self.db.exists('host', {'name': arg}):
-                    self.db.update_one('host', {'name': arg}, {'data.nmap': result})
-                    success('Saved Nmap results')
-                for item in result['ports']:
-                    print item
-            else:
-                warning('Nmap scan completed but no open ports found')
-        else:
-            error('Must specify a IPv4 or FQDN artifact')
+        self.dispatch.submit(self.session, 'nmap', arg)
 
 
     def do_passivetotal(self, arg):
         """Search PassiveTotal for host"""
-        pass
+        self.dispatch.submit(self.session, 'passivetotal', arg)
 
 
     def do_pastebin(self, arg):
@@ -830,51 +540,18 @@ class Console(cmd2.Cmd):
 
     def do_securitynews(self, arg):
         """Get current cybersecurity headlines from Google News"""
-        from lib.modules import securitynews
-
-        result = securitynews.run()
-
-        if result is not None:
-            print 'Security News:'
-            for item in result['security']:
-                print ('Title: %s\nURL: %s\n' % (item['title'], item['url']))
-
-            print 'Vulnerability News:'
-            for item in result['vulnerablities']:
-                print ('Title: %s\nURL: %s\n' % (item['title'], item['url']))
+        self.dispatch.submit(self.session, 'securitynews', arg)
 
 
     def do_shodan(self, arg):
         """Query Shodan for host"""
-        from lib.modules import shodan
-
-        answer, result = self.check_session(arg)
-        if answer and result is None:
-            error('Unable to find artifact key in session (%s)' % arg)
-            return
-        elif answer and result is not None:
-            arg = result
-        else:
-            pass
-
-        if is_ipv4(arg) or is_ipv6(arg):
-            result = shodan.ip(arg)
-        elif is_fqdn(arg):
-            result = shodan.domain(arg)
-
-        if result is not None:
-            if self.db.exists('host', {'name': arg}):
-                self.db.update_one('host', {'name': arg}, {'data.shodan': result})
-                success('Saved Shodan results')
-            print(json.dumps(result, indent=2, default=jsondate))
-        else:
-            error('Failed to retrieve Shodan results: %s' % arg)
+        self.dispatch.submit(self.session, 'shodan', arg)
 
 
     def do_source(self, arg):
         """ Set the source for the most recent artifact added to a session """
         last = self.session.receive('artifacts')
-        _type = self.detect_type(last)
+        _type = detect_type(last)
 
         if self.db.exists(_type, {'name': last}):
             self.db.update_one(_type, {'name': last}, {'source': arg})
@@ -905,29 +582,7 @@ class Console(cmd2.Cmd):
 
     def do_urlvoid(self, arg):
         """Search URLVoid for domain name"""
-        from lib.modules import urlvoid
-
-        answer, result = self.check_session(arg)
-        if answer and result is None:
-            error('Unable to find artifact key in session (%s)' % arg)
-            return
-        elif answer and result is not None:
-            arg = result
-        else:
-            pass
-
-        if is_ipv4(arg) or is_fqdn(arg):
-            result = urlvoid.run(arg)
-            if result is not None:
-                if self.db.exists('host', {'name': arg}):
-                    doc_id = self.db.update_one('host', {'name': arg}, {'data.urlvoid': result})
-                    if doc_id is not None:
-                        success('Saved URLVoid results')
-                print(json.dumps(result, indent=2, default=jsondate))
-            else:
-                warning('Failed to get URLVoid results (%s)' % arg)
-        else:
-            warning('Must specify IPv4 or FQDN artifact (%s)' % arg)
+        self.dispatch.submit(self.session, 'urlvoid', arg)
 
 
     def do_usersearch(self, arg):
@@ -937,55 +592,7 @@ class Console(cmd2.Cmd):
 
     def do_virustotal(self, arg):
         """Search VirusTotal for IPv4, FQDN, or Hash"""
-        from lib.modules import virustotal
-
-        answer, result = self.check_session(arg)
-        if answer is not None and result is None:
-            error('Unable to find artifact key in session (%s)' % arg)
-            return
-        elif answer is not None and result is not None:
-            arg = result
-        else:
-            pass
-
-        if is_fqdn(arg):
-            result = virustotal.run_host(arg)
-
-            if result is not None:
-                if self.db.exists('host', {'name': arg}):
-                    self.db.update_one('host', {'name': arg}, {'data.virustotal': result})
-                    success('Saved VirusTotal results')
-                print(json.dumps(result, indent=2, default=jsondate))
-
-            else:
-                warning('Failed to get VirusTotal results (%s)' % arg)
-
-        elif is_ipv4(arg):
-            result = virustotal.run_ip(arg)
-
-            if result is not None:
-                if self.db.exists('host', {'name': arg}):
-                    self.db.update_one('host', {'name': arg}, {'data.virustotal': result})
-                    success('Saved VirusTotal results:')
-                print(json.dumps(result, indent=2, default=jsondate))
-
-            else:
-                warning('Failed to get VirusTotal results (%s)' % arg)
-
-        elif is_hash(arg):
-            result = virustotal.run_hash(arg)
-
-            if result is not None:
-                if self.db.exists('hash', {'name': arg}):
-                    self.db.update_one('hash', {'name': arg}, {'data.virustotal', result})
-                    success('Saved VirusTotal results')
-                print(json.dumps(result, indent=2, default=jsondate))
-
-            else:
-                warning('Failed to get VirusTotal results (%s)' % arg)
-
-        else:
-            warning('Virustotal command only accepts IPv4, FQDN artifacts')
+        self.dispatch.submit(self.session, 'virustotal', arg)
 
 
     def do_vxvault(self, arg):
@@ -999,108 +606,75 @@ class Console(cmd2.Cmd):
 
     def do_whois(self, arg):
         """Perform WHOIS lookup on host"""
-        from lib.modules import whois
-
-        answer, result = self.check_session(arg)
-        if answer is not None and result is None:
-            error('Unable to find artifact key in session (%s)' % arg)
-            return
-        elif answer is not None and result is not None:
-            arg = result
-        else:
-            pass
-
-        if is_ipv4(arg):
-            result = whois.ip_run(arg)
-
-            if result is not None:
-                if self.db.exists('host', {'name': arg}):
-                    self.db.update_one('host', {'name': arg}, {'data.whois': result})
-                    success('Saved WHOIS results')
-                print(json.dumps(result, indent=2, default=jsondate))
-            else:
-                warning('Failed to get WHOIS results (%s)' % arg)
-
-        elif is_fqdn(arg):
-            result = whois.host_run(arg)
-
-            if result is not None:
-                if self.db.exists('host', {'name': arg}):
-                    self.db.update_one('host', {'name': arg}, {'data.whois': result})
-                    success('Saved WHOIS results')
-                print(json.dumps(result, indent=2, default=jsondate))
-            else:
-                warning('Failed to get WHOIS results (%s)' % arg)
-
-        else:
-            warning('Failed to get WHOIS results (%s)' % arg)
+        self.dispatch.submit(self.session, 'whois', arg)
 
 
     def do_whoismind(self, arg):
         """Search Whois Mind for domains associated to an email address"""
-        from lib.modules import whoismind
-
-        answer, result = self.check_session(arg)
-        if answer is not None and result is None:
-            error('Unable to find artifact key in session (%s)' % arg)
-            return
-        elif answer is not None and result is not None:
-            arg = result
-        else:
-            pass
-
-        result = whoismind.run(arg)
-        if result is not None:
-            if self.db.exists('user', {'name': arg}):
-                doc_id = self.db.update_one('user', {'name': arg}, {'data.whoismind': result})
-                if doc_id is not None:
-                    success('Saved WhoisMind results')
-            print(json.dumps(result, indent=2, default=jsondate))
-        else:
-            warning('Failed to get WhoisMind results (%s)' % arg)
+        self.dispatch.submit(self.session, 'whoismind', arg)
 
 
 if __name__ == '__main__':
+    global config
+    global api_keys
+    global output_dir
+
     os.system('clear')
+    print(asciiart.banners[3])
 
-    parser = argparse.ArgumentParser(description='Omnibus - https://github.com/deadbits/omnibus', epilog='Your resource for all things OSINT')
+    parser = argparse.ArgumentParser(description='Omnibus - https://github.com/InQuest/omnibus', epilog='Your resource for all things OSINT')
+    ob_group = parser.add_argument_group('cli options')
 
-    parser.add_argument('-c', '--conf',
+    ob_group.add_argument('-c', '--conf',
         help='path to config file',
         action='store',
         default='%s/etc/omnibus.conf' % os.path.dirname(os.path.realpath(__file__)),
         required=False)
 
-    parser.add_argument('-k', '--keys',
+    ob_group.add_argument('-k', '--keys',
         help='path to API keys file',
         action='store',
         default='%s/etc/apikeys.json' % os.path.dirname(os.path.realpath(__file__)),
         required=False)
 
-    parser.add_argument('-o', '--output',
+    ob_group.add_argument('-o', '--output',
         help='report output directory',
         action='store',
         default='%s/reports' % os.path.dirname(os.path.realpath(__file__)),
         required=False)
 
+    ob_group.add_argument('-d', '--debug',
+        help='enable full traceback on exceptions',
+        action='store_true',
+        default=False,
+        required=False)
+
     args = parser.parse_args()
 
-    global conf
-    global api_keys
-    global output_dir
-    conf = args.conf
     api_keys = args.keys
-    output = args.output
 
-    if not os.path.exists(conf):
-        error('Config file not found; exiting.')
-        sys.exit(1)
+    if args.conf:
+        if not os.path.exists(args.conf):
+            error('Config file not found; exiting ...')
+            sys.exit(1)
+
+        info('Using configuration file (%s)' % args.conf)
+
+        config = args.conf
+
+        output = get_option('core', 'reports', config)
+        debug = True if get_option('core', 'debug', config) == '1' else False
+
+    else:
+        output = args.output
+        debug = args.debug
 
     if os.path.exists(output):
         if not os.path.isdir(output):
-            error('Specified output directory is not a directory; exiting.')
+            error('Specified report output location is not a directory; exiting ...')
             sys.exit(1)
     else:
+        info('Creating report output directory (%s) ...' % output)
         mkdir(output)
 
     console = Console()
