@@ -8,11 +8,16 @@ import pymongo
 
 from common import error
 
+from common import get_option
+
 
 class Mongo(object):
-    def __init__(self):
+    def __init__(self, config):
+        self._host = get_option('mongo', 'host', config)
+        self._port = int(get_option('mongo', 'port', config))
+        self._server = '%s:%s' % (self._host, self._port)
         try:
-            self.conn = pymongo.MongoClient('127.0.0.1:27017')
+            self.conn = pymongo.MongoClient(self._server)
         except Exception as err:
             error('failed to connect to Mongo instance: %s' % str(err))
             raise err
