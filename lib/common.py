@@ -3,14 +3,12 @@ import os
 import re
 import sys
 import json
-import requests
 import datetime
 import warnings
 import functools
+import ConfigParser
 
 from hashlib import sha256
-
-from requests.packages.urllib3 import exceptions
 
 
 jsondate = lambda obj: obj.isoformat() if isinstance(obj, datetime) else None
@@ -30,13 +28,11 @@ re_sha512 = re.compile("\\b[a-f0-9]{128}\\b", re.I | re.S | re.M)
 b58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 
 BOLD = "\033[1m"
-GREY = '\033[90m'
-RED = '\033[91m'
-GREEN = '\033[92m'
-YELLOW = '\033[93m'
-BLUE = '\033[94m'
+RED = '\033[31m'
+GREEN = '\033[32m'
+YELLOW = '\033[33m'
 PURPLE = '\033[95m'
-LIGHTBLUE = '\033[96m'
+DARKBLUE = '\033[38;5;24m'
 END_COLOR = '\033[0m'
 
 CONF = '../etc/apikeys.json'
@@ -44,12 +40,12 @@ CONF = '../etc/apikeys.json'
 
 def info(msg):
     """ Informational message """
-    print('%s%s[*]%s %s' % (BOLD, LIGHTBLUE, END_COLOR, msg))
+    print('%s%s[*]%s %s' % (BOLD, DARKBLUE, END_COLOR, msg))
 
 
 def running(msg):
     """ Background task message """
-    print('%s%s[*]%s %s' % (BOLD, GREY, END_COLOR, msg))
+    print('%s%s[*]%s %s' % (BOLD, PURPLE, END_COLOR, msg))
 
 
 def success(msg):
@@ -65,6 +61,20 @@ def warning(msg):
 def error(msg):
     """ Error that stops proper task completion message """
     print('%s%s[!]%s %s' % (BOLD, RED, END_COLOR, msg))
+
+
+def get_option(section, name, conf):
+    config = ConfigParser.ConfigParser()
+    if not os.path.exists(conf):
+        error('configuration file %s does not exist!' % conf)
+        return None
+    config.read(conf)
+    answer = None
+    try:
+        answer = config.get(section, name)
+    except:
+        pass
+    return answer
 
 
 @functools.wraps
@@ -159,38 +169,21 @@ def mkdir(path):
             return False
 
 
-def http_post(*args, **kwargs):
-    """ Wrapped to silently ignore certain warnings from urllib3 library """
-    kwargs['verify'] = False
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore', exceptions.InsecureRequestWarning)
-        warnings.simplefilter('ignore', exceptions.InsecurePlatformWarning)
-        try:
-            req = requests.get(*args, **kwargs)
-        except:
-            return (False, None)
+def lookup_key(session, artifact):
+    """ Check if entry is a valid session key and return value if true """
+    value = None
+    is_key = False
+    if session is None:
+        return (is_key, value)
 
-        if req.status_code == 200:
-            return (True, req)
-        else:
-            return (False, req)
+    try:
+        artifact = int(artifact)
+        is_key = True
+        value = session.get(artifact)
+    except:
+        pass
 
-
-def http_get(*args, **kwargs):
-    """ Wrapped to silently ignore certain warnings from urllib3 library """
-    kwargs['verify'] = False
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore', exceptions.InsecureRequestWarning)
-        warnings.simplefilter('ignore', exceptions.InsecurePlatformWarning)
-        try:
-            req = requests.get(*args, **kwargs)
-        except:
-            return (False, None)
-
-        if req.status_code == 200:
-            return (True, req)
-        else:
-            return (False, req)
+    return (is_key, value)
 
 
 def utf_decode(data):
@@ -273,3 +266,23 @@ def is_btc_addr(string):
         return b[-4:] == sha256(sha256(b[:-4]).digest()).digest()[:4]
     except:
         return False
+
+
+def detect_type(artifact):
+    """ Determine type of given argument """
+    if is_ipv4(artifact):
+        return 'host'
+    elif is_fqdn(artifact):
+        return 'host'
+    elif is_email(artifact):
+        return 'email'
+    elif is_hash(artifact):
+        return 'hash'
+    elif is_btc_addr(artifact):
+        return 'btc'
+    else:
+        try:
+            if artifact.isalnum():
+                return 'user'
+        except:
+            return None
