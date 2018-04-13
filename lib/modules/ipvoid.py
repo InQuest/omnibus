@@ -5,8 +5,9 @@
 ##
 import BeautifulSoup
 
+from http import http_get
+
 from common import is_ipv4
-from common import http_get
 
 
 def run(ip):
@@ -33,4 +34,9 @@ def run(ip):
                 url = each.parent.a['href']
                 result[site] = url
 
+    return result
+
+
+def main(artifact, artifact_type=None):
+    result = run(artifact)
     return result

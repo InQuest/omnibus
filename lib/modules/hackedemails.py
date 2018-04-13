@@ -3,8 +3,9 @@
 # omnibus - deadbits
 # hacked-emails.com
 ##
+from http import http_get
+
 from common import error
-from common import http_get
 
 
 def run(email_addr):
@@ -22,3 +23,8 @@ def run(email_addr):
         results = response.json()
 
     return results
+
+
+def main(artifact, artifact_type=None):
+    result = run(artifact)
+    return result

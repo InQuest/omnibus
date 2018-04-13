@@ -4,18 +4,20 @@
 # query SANS ISC API
 ##
 import dshield
-from common import is_ipv4
 
 
 def run(host):
-    if is_ipv4(host):
-        result = None
+    result = None
 
-        try:
-            data = dshield.ip(host)
-        except:
-            return result
-
+    try:
+        data = dshield.ip(host)
         result = data['ip']
+    except:
+        pass
 
+    return result
+
+
+def main(artifact, artifact_type=None):
+    result = run(artifact)
     return result

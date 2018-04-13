@@ -19,3 +19,8 @@ def run(host):
         pass
 
     return results
+
+
+def main(artifact, artifact_type=None):
+    result = run(artifact)
+    return result

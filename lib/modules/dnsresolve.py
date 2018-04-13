@@ -32,3 +32,8 @@ def run(domain):
     results['TXT'] = get_record(domain, 'TXT')
 
     return results
+
+
+def main(artifact, artifact_type=None):
+    result = run(artifact)
+    return result

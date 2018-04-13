@@ -3,22 +3,29 @@
 # omnibus - deadbits.
 # censys.io module
 ##
-import censys.ipv4
+from http import http_get
 
-from common import is_ipv4
 from common import get_apikey
 
 
 def run(host):
+    result = None
     key = get_apikey('censys')
-    results = None
+    url = 'https://censys.io/api/v1/view/ipv4/%s' % host
+    headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
 
-    if is_ipv4(host):
-        censysio = censys.ipv4.CensysIPv4(api_id=key['token'], api_secret=key['secret'])
 
-        try:
-            results = censysio.view(host)
-        except:
-            return results
+    try:
+        status, response = http_get(url, auth=(key['token'], key['secret']), headers=headers)
+    except:
+        return result
 
-    return results
+    if status:
+        result = response.json()
+
+    return result
+
+
+def main(artifact, artifact_type=None):
+    result = run(artifact)
+    return result

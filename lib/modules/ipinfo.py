@@ -3,8 +3,7 @@
 # omnibus - deadbits.
 # ipinfo module
 ##
-from common import error
-from common import http_get
+from http import http_get
 
 
 def run(host):
@@ -15,10 +14,14 @@ def run(host):
     try:
         status, response = http_get(url, headers=headers)
     except:
-        error('failed to get IPVoid results (%s)' % host)
         return results
 
     if status:
         results = response.json()
 
     return results
+
+
+def main(artifact, artifact_type=None):
+    result = run(artifact)
+    return result

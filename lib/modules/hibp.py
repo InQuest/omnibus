@@ -3,9 +3,9 @@
 # omnibus - deadbits
 # haveibeenpwned
 ##
+from http import http_get
 
 from common import warning
-from common import http_get
 
 
 def run(email_addr):
@@ -25,3 +25,8 @@ def run(email_addr):
             results = response.json()
 
     return results
+
+
+def main(artifact, artifact_type=None):
+    result = run(artifact)
+    return result

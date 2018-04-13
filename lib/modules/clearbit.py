@@ -5,13 +5,14 @@
 ##
 import json
 
-from common import http_get
+from http import http_get
+
 from common import warning
 from common import get_apikey
 
 
 def run(email_address):
-    results = None
+    result = None
     api_key = get_apikey('clearbit')
     url = 'https://person.clearbit.com/v1/people/email/%s' % email_address
     headers = {
@@ -22,13 +23,18 @@ def run(email_address):
     try:
         status, response = http_get(url, headers=headers)
     except:
-        return results
+        return result
 
     if status:
         if 'error' in response.content and 'queued' in response.content:
             warning('results are queued by Clearbit. please re-run module after 5-10 minutes.')
-            return results
+            return result
 
-        results = json.loads(response.content)
+        result = json.loads(response.content)
 
-    return results
+    return result
+
+
+def main(artifact, artifact_type=None):
+    result = run(artifact)
+    return result

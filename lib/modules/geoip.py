@@ -3,8 +3,9 @@
 # omnibus - deadbits.
 # geolocation for hosts
 ##
+from http import http_get
+
 from common import error
-from common import http_get
 
 
 def run(host):
@@ -26,3 +27,8 @@ def run(host):
         del results['__deprecation_message__']
 
     return results
+
+
+def main(artifact, artifact_type=None):
+    result = run(artifact)
+    return result

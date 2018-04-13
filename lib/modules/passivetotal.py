@@ -5,8 +5,9 @@
 ##
 from requests.auth import HTTPBasicAuth
 
+from http import http_get
+
 from common import get_apikey
-from common import http_get
 
 
 def run(host):
@@ -26,4 +27,9 @@ def run(host):
         data = response.json()
         result = data['results']
 
+    return result
+
+
+def main(artifact, artifact_type=None):
+    result = run(artifact)
     return result

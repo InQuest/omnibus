@@ -5,7 +5,7 @@
 ##
 import xml.etree.ElementTree as ET
 
-from common import http_get
+from http import http_get
 
 
 def vuln_news():
@@ -62,4 +62,9 @@ def run():
     result = {}
     result['security'] = security_news()
     result['vulnerablities'] = vuln_news()
+    return result
+
+
+def main(artifact=None, artifact_type=None):
+    result = run()
     return result

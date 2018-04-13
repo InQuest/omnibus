@@ -5,7 +5,7 @@
 ##
 import BeautifulSoup
 
-from common import http_get
+from http import http_get
 
 
 def run(host):
@@ -35,4 +35,9 @@ def run(host):
         if len(result) == 0:
             return None
 
+    return result
+
+
+def main(artifact, artifact_type=None):
+    result = run(artifact)
     return result

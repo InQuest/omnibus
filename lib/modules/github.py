@@ -3,8 +3,9 @@
 # omnibus - deadbits
 # search github for active users
 ##
+from http import http_get
+
 from common import error
-from common import http_get
 
 
 def run(username):
@@ -22,3 +23,8 @@ def run(username):
         results = response.json()
 
     return results
+
+
+def main(artifact, artifact_type=None):
+    result = run(artifact)
+    return result

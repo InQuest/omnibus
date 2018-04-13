@@ -3,7 +3,7 @@
 # omnibus - deadbits.
 # keybase user search
 ##
-from common import http_get
+from http import http_get
 
 
 def run(user):
@@ -20,4 +20,9 @@ def run(user):
         if data['them'][0] is not None:
             result = data['them'][0]
 
+    return result
+
+
+def main(artifact, artifact_type=None):
+    result = run(artifact)
     return result

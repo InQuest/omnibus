@@ -5,7 +5,7 @@
 ##
 import BeautifulSoup
 
-from common import http_get
+from http import http_get
 
 
 def run(email_addr):
@@ -27,4 +27,9 @@ def run(email_addr):
             if tag.text in tag['href'] and tag.text not in result:
                 result.append(tag.text)
 
+    return result
+
+
+def main(artifact, artifact_type=None):
+    result = run(artifact)
     return result

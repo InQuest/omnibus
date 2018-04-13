@@ -3,12 +3,12 @@
 # omnibus - deadbits.
 # shodan search
 ##
+from http import http_get
 
-from common import http_get
 from common import get_apikey
 
 
-def domain(host):
+def fqdn_run(host):
     result = None
     api_key = get_apikey('shodan')
     url = 'https://api.shodan.io/shodan/host/search?key=%s&query=hostname:%s&facets={facets}' % (api_key, host)
@@ -25,7 +25,7 @@ def domain(host):
     return result
 
 
-def ip(host):
+def ip_run(host):
     result = None
     api_key = get_apikey('shodan')
     url = 'https://api.shodan.io/shodan/host/%s?key=%s' % (host, api_key)
@@ -38,5 +38,16 @@ def ip(host):
 
     if status:
         result = response.json()
+
+    return result
+
+
+def main(artifact, artifact_type):
+    if artifact_type == 'ipv4':
+        result = ip_run(artifact)
+    elif artifact_type == 'fqdn':
+        result = fqdn_run(artifact)
+    else:
+        return None
 
     return result
