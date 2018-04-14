@@ -8,12 +8,8 @@ import commands
 
 def run(host):
     results = {}
-    ports = [
-        '21', '22', '23', '25', '53', '80', '110', '123', '137',
-        '389', '443', '445', '512', '990', '992', '993', '995', '1080', '1433',
-        '3306', '3389', '5900', '5901', '5902', '5903', '6379', '6667', '6669',
-        '27017']
-    cmd = 'nmap -sC -sT -A -Pn -T4 -p%s %s' % (','.join(ports), host)
+
+    cmd = 'nmap -sC -sT -A -Pn -T4 - %s' % host
 
     try:
         out = commands.getoutput(cmd)

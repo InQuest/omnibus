@@ -3,7 +3,7 @@
 # omnibus - deadbits.
 # urlvoid module - from yolothreat's utilitybelt
 ##
-import BeautifulSoup
+from BeautifulSoup import BeautifulSoup
 
 from http import get
 

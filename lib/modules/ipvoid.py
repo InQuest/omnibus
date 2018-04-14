@@ -3,7 +3,7 @@
 # omnibus - deadbits.
 # ipvoid module
 ##
-import BeautifulSoup
+from BeautifulSoup import BeautifulSoup
 
 from http import get
 

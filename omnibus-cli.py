@@ -436,6 +436,14 @@ Usage: report <artifact name>
                 error('Failed to properly save report')
 
 
+    def do_machine(self, arg):
+        """Run all modules available for an artifacts type
+
+Usage: machine <artifact name>
+       machine <session id>"""
+        self.dispatch.machine(self.session, arg)
+
+
     def do_abusech(self, arg):
         """Search Abuse.ch for artifact details """
         pass
@@ -565,6 +573,7 @@ Usage: report <artifact name>
         """Read latest from RSS feed
 
         Usage: rss <feed url>"""
+        self.dispatch.submit(self.session, 'rss', arg, True)
 
 
     def do_run(self, arg):
@@ -574,7 +583,7 @@ Usage: report <artifact name>
 
     def do_securitynews(self, arg):
         """Get current cybersecurity headlines from Google News"""
-        self.dispatch.submit(self.session, 'securitynews', arg)
+        self.dispatch.submit(self.session, 'securitynews', arg, True)
 
 
     def do_shodan(self, arg):
