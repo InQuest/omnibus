@@ -4,8 +4,6 @@ import re
 import sys
 import json
 import datetime
-import warnings
-import functools
 import ConfigParser
 
 from hashlib import sha256
@@ -35,7 +33,7 @@ PURPLE = '\033[95m'
 DARKBLUE = '\033[38;5;24m'
 END_COLOR = '\033[0m'
 
-API_CONF = '../etc/apikeys.json'
+API_CONF = '%s/etc/apikeys.json' % os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 
 
 def info(msg):

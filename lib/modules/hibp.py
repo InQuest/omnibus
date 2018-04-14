@@ -5,12 +5,12 @@
 ##
 from http import get
 
-from common import warning
+from common import is_email
 
 
-def run(email_addr):
+def check_breaches(account):
     results = None
-    url = 'https://haveibeenpwned.com/api/v1/breachedaccount/%s' % email_addr
+    url = 'https://haveibeenpwned.com/api/v2/breachedaccount/%s' % account
     headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
 
     try:
@@ -19,12 +19,36 @@ def run(email_addr):
         return results
 
     if status:
-        if 'Attention Required! | CloudFlare' in response.content:
-            warning('CloudFlare detected; please try module again later.')
-        else:
-            results = response.json()
+        results = response.json()
 
     return results
+
+
+def check_pastes(account):
+    results = None
+    url = 'https://haveibeenpwned.com/api/v2/pasteaccount/%s' % account
+    headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
+
+    try:
+        status, response = get(url, headers=headers)
+    except:
+        return results
+
+    if status:
+        results = response.json()
+
+    return results
+
+
+def run(account):
+    result = {'breaches': None, 'pastes': None}
+
+    result['breaches'] = check_breaches(account)
+
+    if is_email(account):
+        result['pastes'] = check_pastes(account)
+
+    return result
 
 
 def main(artifact, artifact_type=None):

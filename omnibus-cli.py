@@ -14,6 +14,7 @@ import cmd2
 import json
 import argparse
 
+from lib import common
 from lib import storage
 from lib import asciiart
 
@@ -94,6 +95,9 @@ class Console(cmd2.Cmd):
         self.db = Mongo(config)
         self.dispatch = Dispatch(self.db)
         self.session = None
+
+        if DEBUG:
+            self.do_set('debug true')
 
 
     def sigint_handler(self, signum, frame):
@@ -321,7 +325,7 @@ Usage: delete <name>
 Usage: cat apikeys
        cat <artifact name>"""
         if arg == 'apikeys':
-            data = json.load(open(api_keys, 'rb'))
+            data = json.load(open(common.API_CONF, 'rb'))
             print json.dumps(data, indent=2)
         else:
             is_key, value = lookup_key(self.session, arg)
@@ -664,6 +668,7 @@ if __name__ == '__main__':
     global config
     global api_keys
     global output_dir
+    global DEBUG
 
     os.system('clear')
     print(asciiart.banners[1])
@@ -685,11 +690,13 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    api_keys = '%s/etc/apikeys.json' % os.path.dirname(os.path.realpath(__file__))
     config = '%s/etc/omnibus.conf' % os.path.dirname(os.path.realpath(__file__))
 
     output_dir = args.output
-    debug = args.debug
+    DEBUG = args.debug
+
+    info('Using configuration file (%s) ...' % config)
+    info('Debug: %s' % DEBUG)
 
     if os.path.exists(output_dir):
         if not os.path.isdir(output_dir):
