@@ -16,21 +16,21 @@ from common import warning
 class BitcoinAddress(object):
     def __init__(self, addr, source=''):
         self.data = {}
-        self.notes = []
+        self.source = source
         self.name = addr
 
 
 class User(object):
     def __init__(self, username, source=''):
         self.data = {}
-        self.notes = []
+        self.source = source
         self.name = username
 
 
 class Email(object):
     def __init__(self, email_address, source=''):
         self.data = {}
-        self.notes = []
+        self.source = source
         self.name = email_address
 
 
@@ -39,7 +39,6 @@ class Hash(object):
         self.name = hash
         self.data = {}
         self.type = None
-        self.notes = []
         self.source = source
 
         if self.type is None:
@@ -60,7 +59,6 @@ class Host(object):
         self.name = host
         self.data = {}
         self.type = None
-        self.notes = []
         self.source = source
 
         if self.type is None:

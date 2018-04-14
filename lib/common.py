@@ -35,7 +35,7 @@ PURPLE = '\033[95m'
 DARKBLUE = '\033[38;5;24m'
 END_COLOR = '\033[0m'
 
-CONF = '../etc/apikeys.json'
+API_CONF = '../etc/apikeys.json'
 
 
 def info(msg):
@@ -77,25 +77,14 @@ def get_option(section, name, conf):
     return answer
 
 
-@functools.wraps
-def ignore_warnings(function):
-    """ Wrapper to ignore warnings given off by a function """
-    def _ignore_warning(*args, **kwargs):
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore')
-            result = function(*args, **kwargs)
-        return result
-    return _ignore_warning
-
-
 def get_apikey(service):
     """ Read API key config file and return API key by service name """
-    if os.path.exists(CONF):
-        data = load_json(CONF)
+    if os.path.exists(API_CONF):
+        data = load_json(API_CONF)
         if service in data.keys():
             return data[service]
     else:
-        error('cannot find API keys file: %s' % CONF)
+        error('cannot find API keys file: %s' % API_CONF)
 
 
 def timestamp():

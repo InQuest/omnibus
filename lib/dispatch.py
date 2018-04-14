@@ -6,6 +6,10 @@
 import json
 import importlib
 
+from pygments import lexers
+from pygments import highlight
+from pygments import formatters
+
 from common import error
 from common import warning
 
@@ -75,11 +79,11 @@ class Dispatch(object):
 
         if module_result is not None:
             if self.db.exists(artifact_type, {'name': artifact}):
-                doc_id = self.db.update(artifact_type, {'name': artifact}, {'data.' + module: module_result})
+                doc_id = self.db.update_one(artifact_type, {'name': artifact}, {'data.' + module: module_result})
                 if doc_id is None:
                     warning('Failed to update Mongo document (%s)' % artifact)
 
-            print(json.dumps(module_result, indent=2, default=jsondate))
+            print(highlight(unicode(json.dumps(module_result, indent=2, default=jsondate), 'UTF-8'), lexers.JsonLexer(), formatters.TerminalFormatter()))
 
         else:
             warning('Failed to get module results (%s)' % module)
@@ -90,7 +94,6 @@ class Dispatch(object):
 
         try:
             ptr = importlib.import_module('lib.modules.%s' % module)
-            print(ptr)
         except Exception as err:
             error('Failed to load module (%s)' % module)
             raise err

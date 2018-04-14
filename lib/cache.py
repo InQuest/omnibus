@@ -30,16 +30,6 @@ class RedisCache(object):
             self.db = None
 
 
-    def send(self, message, queue_name):
-        """ Send a new message to a specific Redis queue """
-        message = utf_encode(message)
-        try:
-            self.db.lpush(queue_name, message)
-        except Exception as err:
-            error('[redis] failed to push message to queue %s (error: %s)' % (queue_name, str(err)))
-            pass
-
-
     def receive(self, queue_name):
         """ Return most recent message from a given Redis queue"""
         try:
@@ -82,46 +72,6 @@ class RedisCache(object):
         # backward compatibility (Redis v2.2)
         self.db.setnx(key, value)
         self.db.expire(key, ttl)
-
-
-    def acknowledge(self, queue_name):
-        try:
-            return self.db.rpop(queue_name)
-        except Exception as err:
-            error('[redis] failed to acknowledge queue %s (error: %s)' % (queue_name, str(err)))
-            pass
-
-
-    def count_queued(self, *queues):
-        """ Get count of all messages in all queues"""
-        queue_dict = {}
-        for queue in queues:
-            try:
-                queue_dict[queue] = self.db.llen(queue)
-            except Exception as err:
-                error('[redis] failed to count queued messages (queues: %s) (error: %s)' % (str(queue)), str(err))
-                pass
-        return queue_dict
-
-
-    def event_stream(self, queue_name):
-        """ Use pubsub method to listen for messages from a specific subscription/queue """
-        pub_sub = self.db.pubsub()
-        pub_sub.subscribe(queue_name)
-        for message in pub_sub.listen():
-            if isinstance(message, bytes):
-                yield utf_decode(message['data'])
-            else:
-                yield message['data']
-
-
-    def clear_queue(self, queue_name):
-        """ Clear a queue by deleting the key """
-        try:
-            return self.db.delete(queue_name)
-        except Exception as err:
-            error('[redis] failed to delete queue %s (error: %s)' % (queue_name, str(err)))
-            pass
 
 
     def flush(self):
