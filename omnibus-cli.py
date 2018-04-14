@@ -47,7 +47,7 @@ help_dict = {
         'help', 'history', 'quit', 'cat apikeys', 'add apikey', 'banner'
     ],
     'artifacts': [
-        'cat', 'rm', 'open', 'add source', 'add note'
+        'cat', 'rm', 'open', 'source'
     ],
     'modules': [
         'abusech', 'alienvault', 'blockchain', 'clearbit', 'censys', 'cymon',
@@ -57,6 +57,9 @@ help_dict = {
         'threatexpert', 'totalhash', 'twitter', 'urlvoid', 'usersearch', 'virustotal', 'vxvault', 'web', 'whois'],
     'sessions': [
         'session', 'ls', 'clear'
+    ],
+    'machines': [
+        'machine fqdn', 'machine ip', 'machine email', 'machine btc', 'machine user'
     ]
 }
 
@@ -68,7 +71,9 @@ class Console(cmd2.Cmd):
             persistent_history_file=get_option('core', 'hist_file', config),
             persistent_history_length=int(get_option('core', 'hist_size', config)))
 
-        self.allow_cli_args = True
+        self.allow_cli_args = False
+        self.default_to_shell = False
+        self.intro = 'Welcome to the Omnibus shell! Type "help" to get started'
         self.allow_redirection = True
         self.prompt = 'omnibus >> '
         self.redirector = '>'
@@ -92,6 +97,7 @@ class Console(cmd2.Cmd):
 
 
     def sigint_handler(self, signum, frame):
+        """Ensure Redis DB is cleared before exiting application"""
         pipe_proc = self.pipe_proc
         if pipe_proc is not None:
             pipe_proc.terminate()
@@ -100,6 +106,12 @@ class Console(cmd2.Cmd):
             self.session.flush()
 
         raise KeyboardInterrupt('Caught keyboard interrupt; quitting ...')
+
+
+    def default(self, arg):
+        """Override default function for custom error message"""
+        error('Unknown command: %s' % arg)
+        return
 
 
     def do_quit(self, _):
@@ -127,8 +139,10 @@ class Console(cmd2.Cmd):
 
 
     def do_artifacts(self, arg):
-        """Show artifact specific commands"""
-        print('[ Artifact Commands ]')
+        """Show artifact information and available commands"""
+        print('[ Documentation ]')
+        print('Artifacts ')
+        print('[ Commands ]')
         for cmd in help_dict['artifacts']:
             print(cmd)
 
@@ -184,8 +198,8 @@ class Console(cmd2.Cmd):
     def do_find(self, arg):
         """Search Mongo for artifact and display results
 
-        Usage: find <artifact name>
-               find <session id> """
+Usage: find <artifact name>
+       find <session id> """
         is_key, value = lookup_key(self.session, arg)
 
         if is_key and value is None:
@@ -214,10 +228,11 @@ class Console(cmd2.Cmd):
         else:
             warning('No active session; start a new session by running the "session" command')
 
+
     def do_rm(self, arg):
         """Remove artifact from session by ID
 
-        Usage: rm <session id>"""
+Usage: rm <session id>"""
         try:
             arg = int(arg)
         except:
@@ -237,10 +252,10 @@ class Console(cmd2.Cmd):
     def do_new(self, arg):
         """Create a new artifact
 
-        Artifacts are created by their name. An IP address artifacts name would be the IP address itself,
-        an FQDN artifacts name is the domain name, and so on.
+Artifacts are created by their name. An IP address artifacts name would be the IP address itself,
+an FQDN artifacts name is the domain name, and so on.
 
-        Usage: new <artifact name> """
+Usage: new <artifact name> """
         _type = detect_type(arg)
 
         if _type == 'email':
@@ -284,7 +299,8 @@ class Console(cmd2.Cmd):
     def do_delete(self, arg):
         """Remove artifact from database by name or ID
 
-        Usage: delete <name> """
+Usage: delete <name>
+       delete <session id>"""
         is_key, value = lookup_key(self.session, arg)
 
         if is_key and value is None:
@@ -302,8 +318,8 @@ class Console(cmd2.Cmd):
     def do_cat(self, arg):
         """View artifact details or list API keys
 
-        Usage: cat apikeys
-               cat <artifact name> """
+Usage: cat apikeys
+       cat <artifact name>"""
         if arg == 'apikeys':
             data = json.load(open(api_keys, 'rb'))
             print json.dumps(data, indent=2)
@@ -329,12 +345,12 @@ class Console(cmd2.Cmd):
     def do_open(self, arg):
         """Load text file list of artifacts
 
-        Command will detect each line items artifact type, create the artifact,
-        and add it to the current session if there is one.
+Command will detect each line items artifact type, create the artifact,
+and add it to the current session if there is one.
 
-        Usage: open <path/to/file.txt> """
+Usage: open <path/to/file.txt> """
         if not os.path.exists(arg):
-            warning('Cannot find list file on disk (%s)' % arg)
+            warning('Cannot find file on disk (%s)' % arg)
             return
 
         artifacts = read_file(arg, True)
@@ -377,8 +393,12 @@ class Console(cmd2.Cmd):
 
             if a is not None:
                 if self.session is not None:
-                    _id = self.session.count_queued() + 1
+                    count = 0
+                    for key in self.session.db.scan_iter():
+                        count += 1
+                    _id = count + 1
                     self.session.set(_id, artifact)
+                    print('[%s] %s (%s)' % (_id, artifact, artifact_type))
 
         success('Finished loading artifact list')
 
@@ -386,15 +406,25 @@ class Console(cmd2.Cmd):
     def do_report(self, arg):
         """Save artifact report as JSON file
 
-        Usage: report <artifact name>
-               report <session id> """
+Usage: report <artifact name>
+       report <session id>"""
+        is_key, value = lookup_key(self.session, arg)
+
+        if is_key and value is None:
+            error('Unable to find artifact key in session (%s)' % arg)
+            return
+        elif is_key and value is not None:
+            arg = value
+        else:
+            pass
+
         _type = detect_type(arg)
 
         result = self.db.find(_type, {'name': arg}, one=True)
         if len(result) == 0:
             warning('No entry found for artifact (%s)' % arg)
         else:
-            report = storage.JSON(result)
+            report = storage.JSON(data=result, file_path=output_dir)
             report.save()
             if os.path.exists(report.file_path):
                 success('Saved artifact report (%s)' % report.file_path)
@@ -549,9 +579,25 @@ class Console(cmd2.Cmd):
 
 
     def do_source(self, arg):
-        """ Set the source for the most recent artifact added to a session """
-        last = self.session.receive('artifacts')
-        _type = detect_type(last)
+        """Add source to given artifact or most recently added artifact if not specified
+
+Usage: source                            # adds to last created artifact
+       source <artifact name|session id> # adds to specific artifact
+        """
+        if arg == '':
+            last = self.session.receive('artifacts')
+            _type = detect_type(last)
+        else:
+            _type = detect_type(arg)
+            is_key, value = lookup_key(self.session, arg)
+
+            if is_key and value is None:
+                error('Unable to find artifact key in session (%s)' % arg)
+                return
+            elif is_key and value is not None:
+                arg = value
+            else:
+                pass
 
         if self.db.exists(_type, {'name': last}):
             self.db.update_one(_type, {'name': last}, {'source': arg})
@@ -562,11 +608,11 @@ class Console(cmd2.Cmd):
 
     def do_threatcrowd(self, arg):
         """Search ThreatCrowd for host"""
-        pass
+        self.dispatch.submit(self.session, 'threatcrowd', arg)
 
 
     def do_threatexpert(self, arg):
-        """Search ThreatExper for host"""
+        """Search ThreatExpert for host"""
         pass
 
 
@@ -620,22 +666,10 @@ if __name__ == '__main__':
     global output_dir
 
     os.system('clear')
-    print(asciiart.banners[3])
+    print(asciiart.banners[1])
 
-    parser = argparse.ArgumentParser(description='Omnibus - https://github.com/InQuest/omnibus', epilog='Your resource for all things OSINT')
+    parser = argparse.ArgumentParser(description='Omnibus - https://github.com/InQuest/omnibus')
     ob_group = parser.add_argument_group('cli options')
-
-    ob_group.add_argument('-c', '--conf',
-        help='path to config file',
-        action='store',
-        default='%s/etc/omnibus.conf' % os.path.dirname(os.path.realpath(__file__)),
-        required=False)
-
-    ob_group.add_argument('-k', '--keys',
-        help='path to API keys file',
-        action='store',
-        default='%s/etc/apikeys.json' % os.path.dirname(os.path.realpath(__file__)),
-        required=False)
 
     ob_group.add_argument('-o', '--output',
         help='report output directory',
@@ -651,31 +685,19 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    api_keys = args.keys
+    api_keys = '%s/etc/apikeys.json' % os.path.dirname(os.path.realpath(__file__))
+    config = '%s/etc/omnibus.conf' % os.path.dirname(os.path.realpath(__file__))
 
-    if args.conf:
-        if not os.path.exists(args.conf):
-            error('Config file not found; exiting ...')
-            sys.exit(1)
+    output_dir = args.output
+    debug = args.debug
 
-        info('Using configuration file (%s)' % args.conf)
-
-        config = args.conf
-
-        output = get_option('core', 'reports', config)
-        debug = True if get_option('core', 'debug', config) == '1' else False
-
-    else:
-        output = args.output
-        debug = args.debug
-
-    if os.path.exists(output):
-        if not os.path.isdir(output):
+    if os.path.exists(output_dir):
+        if not os.path.isdir(output_dir):
             error('Specified report output location is not a directory; exiting ...')
             sys.exit(1)
     else:
-        info('Creating report output directory (%s) ...' % output)
-        mkdir(output)
+        info('Creating report output directory (%s) ...' % output_dir)
+        mkdir(output_dir)
 
     console = Console()
     console.cmdloop()
