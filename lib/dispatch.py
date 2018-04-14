@@ -11,6 +11,7 @@ from pygments import highlight
 from pygments import formatters
 
 from common import error
+from common import success
 from common import warning
 
 from common import is_ipv4
@@ -37,7 +38,7 @@ class Dispatch(object):
             ],
             'fqdn': [
                 'cymon', 'dnsbrute', 'dnsresolve', 'geoip', 'ipinfo', 'ipvoid', 'nmap', 'projecthp',
-                'shodan', 'virustotal', 'webserver', 'whois'
+                'shodan', 'virustotal', 'webserver', 'whois', 'passivetotal'
             ],
             'user': [
                 'github', 'gitlab', 'gist', 'keybase',
@@ -48,7 +49,8 @@ class Dispatch(object):
         }
 
 
-    def submit(self, session, module, artifact):
+    def machine(self, session, artifact):
+        """ Run all modules against an artifact of a given type """
         is_key, value = lookup_key(session, artifact)
 
         if is_key and value is None:
@@ -61,27 +63,73 @@ class Dispatch(object):
 
         artifact_type = detect_type(artifact)
 
-        if artifact_type == 'host':
-            if is_ipv4(artifact):
-                artifact_type = 'ipv4'
-            elif is_fqdn(artifact):
-                artifact_type = 'fqdn'
-
         if artifact_type not in self.modules.keys():
             warning('Argument is not a valid artifact (%s)' % artifact)
             return
 
-        if module not in self.modules[artifact_type]:
-            warning('Artifact is not accepted by module (%s) (valid types: %s)' % artifact)
-            return
+        modules = self.modules[artifact_type]
 
-        module_result = self.run(module, artifact, artifact_type)
+        for m in modules:
+            module_result = self.run(m, artifact, artifact_type)
+
+            if module_result is not None:
+                if self.db.exists(artifact_type, {'name': artifact}):
+                    doc_id = self.db.update_one(artifact_type, {'name': artifact}, {'data.' + m: module_result})
+                    if doc_id is None:
+                        warning('Failed to update Mongo document (%s)' % artifact)
+
+                print(highlight(unicode(json.dumps(module_result, indent=2, default=jsondate), 'UTF-8'), lexers.JsonLexer(), formatters.TerminalFormatter()))
+
+            else:
+                warning('Failed to get module results (%s)' % m)
+
+        success('Machine completed')
+
+
+    def submit(self, session, module, artifact, no_argument=False):
+        """ RUn a single module against an artifact """
+        if not no_argument:
+            is_key, value = lookup_key(session, artifact)
+
+            if is_key and value is None:
+                error('Unable to find artifact key in session (%s)' % artifact)
+                return
+            elif is_key and value is not None:
+                artifact = value
+            else:
+                pass
+
+            artifact_type = detect_type(artifact)
+            if artifact_type == 'host':
+                if is_ipv4(artifact):
+                    module_type = 'ipv4'
+                elif is_fqdn(artifact):
+                    module_type = 'fqdn'
+
+                if module_type not in self.modules.keys():
+                    warning('Argument is not a valid artifact (%s)' % artifact)
+                    return
+
+            if artifact_type not in self.modules.keys():
+                warning('Argument is not a valid artifact (%s)' % artifact)
+                return
+
+
+            if module not in self.modules[artifact_type]:
+                warning('Artifact is not accepted by module (%s) (valid types: %s)' % artifact)
+                return
+
+        if artifact_type == 'host':
+            module_result = self.run(module, artifact, module_type)
+        else:
+            module_result = self.run(module, artifact, artifact_type)
 
         if module_result is not None:
-            if self.db.exists(artifact_type, {'name': artifact}):
-                doc_id = self.db.update_one(artifact_type, {'name': artifact}, {'data.' + module: module_result})
-                if doc_id is None:
-                    warning('Failed to update Mongo document (%s)' % artifact)
+            if not no_argument:
+                if self.db.exists(artifact_type, {'name': artifact}):
+                    doc_id = self.db.update_one(artifact_type, {'name': artifact}, {'data.' + module: module_result})
+                    if doc_id is None:
+                        warning('Failed to update Mongo document (%s)' % artifact)
 
             print(highlight(unicode(json.dumps(module_result, indent=2, default=jsondate), 'UTF-8'), lexers.JsonLexer(), formatters.TerminalFormatter()))
 
@@ -90,6 +138,7 @@ class Dispatch(object):
 
 
     def run(self, module, artifact, artifact_type):
+        """ Load Python library from modules directory and execute main function """
         results = None
 
         try:
