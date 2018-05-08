@@ -2,12 +2,16 @@
     "censys": {
         "token": "",
         "secret": ""},
-    "github": "",
+    "clearbit": "",
+    "csirtg": "",
+    "ipstack": "",
     "fullcontact": "",
     "shodan": "",
+    "securitytrails": "",
+    "malwarepatrol": "",
     "passivetotal": {
       "user": "",
-      "token": ""
+      "key": ""
     },
     "virustotal": ""
 }
