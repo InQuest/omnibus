@@ -1,4 +1,25 @@
 # OSINT Omnibus
+Provided by [InQuest](https://www.inquest.net)
+
+Table of Contents
+=================
+
+* [OSINT Omnibus](#osint-omnibus)
+  * [Omnibus](#omnibus)
+    * [Vocabulary](#vocabulary)
+    * [Running Omnibus](#running-omnibus)
+      * [API Keys](#api-keys)
+    * [Interactive Console](#interactive-console)
+    * [Artifacts](#artifacts)
+      * [Overview](#overview)
+      * [Creating &amp; Managing Artifacts](#creating--managing-artifacts)
+    * [Sessions](#sessions)
+    * [Modules](#modules)
+    * [Machines](#machines)
+    * [Monitoring Modules](#monitoring-modules)
+    * [Reporting](#reporting)
+
+# OSINT Omnibus
 **Stage:** Pre-release
 There will be some bugs and this is not the final, or even beta, application.
 
@@ -35,7 +56,7 @@ After this, you will need to set any API keys you'd like to use within modules i
 
 It should be noted that most of the services requiring API keys have free accounts and API keys. Some may have lower resource limits, but that hasn't been a problem during smaller daily investigations.
 
-#### Interactive Console
+### Interactive Console
 When you first run the CLI, you'll be greeted by a help menu with some basic information. We tried to build the command line script attempts to mimic some common Linux console commands for ease of use. Omnibus provides commandssuch as `cat` to show information about an artifact, `rm` to remove an artifact from the database, `ls` to view currently session artifacts, and so on.
 
 One additional feature of note is the use of the `>` character for output redirection. For example, if you wish to retrieve the details of an artifact named "inquest.net" saved to a JSON file on your local disk you'd simply run the command:
@@ -95,7 +116,7 @@ When a module is created, new artifacts may be found during the discovery proces
 
 Artifacts can be removed from the database using the "delete" command. If you no longer need an artifact, simply run the delete command and specify the artifacts name or the session ID if it has one.
 
-#### Sessions
+### Sessions
 Omnibus makes use of a feature called "sessions". Sessions are temporary caches created via Redis each time you start a CLI session. Every time you create an artifact, that artifacts name is added to the Session along with a numeric key that makes for easy retrieval, searching, and action against the related artifact.
 For example if you're session held one item of "inquest.net", instead of needing to execute `virustotal inquest.net` you could also run `virustotal 1` and you would receive the same results.
 
@@ -103,9 +124,6 @@ Sessions are here for easy access to artifacts and will be cleared each time you
 If you wish to clear the session early, run the command "wipe" and you'll get clean slate.
 
 Eventually, we would like to add a **Cases** portion to Omnibus that allows users to create cases of artifacts, move between them, and maintain a more coherent OSINT management platform. Though for this current pre-release, we will be sticking with the Session :)
-
-#### Modules
-The following is a list of available, or soon to be available modules. While the vast majority of these have been completed, some require additional components or a bit more work before they are production ready.
 
 
 ### Modules
