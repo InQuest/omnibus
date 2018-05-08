@@ -8,40 +8,37 @@ import cymon
 from common import get_apikey
 
 
-def ip_run(ip):
-    result = None
-    key = get_apikey('cymon')
-
-    api = cymon.Cymon(key)
-
-    try:
-        result = api.ip_lookup(ip)
-    except:
-        pass
-
-    return result
+class Plugin(object):
+    def __init__(self, artifact):
+        self.artifact = artifact
+        self.artifact['data']['cymon'] = None
+        self.api_key = get_apikey('cymon')
+        self.api = cymon.Cymon(self.api_key)
 
 
-def fqdn_run(host):
-    result = None
-    key = get_apikey('cymon')
 
-    api = cymon.Cymon(key)
-
-    try:
-        result = api.domain_lookup(host)
-    except:
-        pass
-
-    return result
+    def ip(self):
+        try:
+            self.artifact['data']['cymon'] = self.api.ip_lookup(self.artifact['name'])
+        except:
+            pass
 
 
-def main(artifact, artifact_type=None):
-    if artifact_type == 'ipv4':
-        result = ip_run(artifact)
-    elif artifact_type == 'fqdn':
-        result = fqdn_run(artifact)
-    else:
-        return None
+    def fqdn(self):
+        try:
+            self.artifact['data']['cymon'] = self.api.domain_lookup(self.artifact['name'])
+        except:
+            pass
 
-    return result
+
+    def run(self):
+        if self.artifact['subtype'] == 'ipv4':
+            self.ip()
+        elif self.artifact['subtype'] == 'fqdn':
+            self.fqdn()
+
+
+def main(artifact):
+    plugin = Plugin(artifact)
+    plugin.run()
+    return plugin.artifact

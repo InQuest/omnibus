@@ -10,67 +10,89 @@ from BeautifulSoup import BeautifulSoup
 from http import get
 
 from common import re_email
+from common import warning
 
 
-def fqdn_run(host):
-    result = None
-    url = 'http://pgp.mit.edu/pks/lookup?op=index&search=%s' % host
-    headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
-
-    try:
-        status, response = get(url, headers=headers)
-
-        result = []
-        if status:
-            if 'No resuls found' in response.text:
-                return result
-
-            data = BeautifulSoup(response.text)
-            items = data.fetch('a')
-            for item in items:
-                matches = re.findall(re_email, item)
-                for m in matches:
-                    result.append(m)
-
-    except:
-        pass
-
-    return result
+class Plugin(object):
+    def __init__(self, artifact):
+        self.artifact = artifact
+        self.artifact['data']['pgp'] = None
+        self.headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
 
 
-def email_run(addr):
-    result = None
-    url = 'http://pgp.mit.edu/pks/lookup?op=index&search=%s' % addr
-    headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
+    def fqdn(self):
+        url = 'http://pgp.mit.edu/pks/lookup?op=index&search=%s' % self.artifact['name']
 
-    try:
-        status, response = get(url, headers=headers)
+        try:
+            status, response = get(url, headers=self.headers)
 
-        result = []
-        if status:
-            if 'No resuls found' in response.text:
-                return result
+            if status:
+                if 'No results found' in response.text:
+                    pass
 
-            data = BeautifulSoup(response.text)
-            hrefs = data.fetch('a')
+                else:
+                    data = BeautifulSoup(response.text)
+                    items = data.fetch('a')
+                    for item in items:
+                        matches = re.findall(re_email, item)
+                        for m in matches:
+                            if isinstance(self.artifact['data']['pgp'], list):
+                                self.artifact['data']['pgp'].append(m)
+                            else:
+                                self.artifact['data']['pgp'] = []
+                                self.artifact['data']['pgp'].append(m)
 
-            for href in hrefs:
-                content = href.contents
+                            self.artifact['children'].append({
+                                'name': m,
+                                'type': 'email',
+                                'source': 'PGP',
+                                'subtype': None})
 
-                if addr in content[0]:
-                    try:
-                        name = content[0].split('&lt;')[0]
-                        result.append(name)
-                    except IndexError:
-                        pass
-
-    except:
-        pass
+        except:
+            pass
 
 
-def main(artifact, artifact_type=None):
-    if artifact_type == 'email':
-        result = email_run(artifact)
-    elif artifact_type == 'fqdn':
-        result = fqdn_run(artifact)
-    return result
+    def email(self):
+        url = 'http://pgp.mit.edu/pks/lookup?op=index&search=%s' % self.artifact['name']
+
+        try:
+            status, response = get(url, headers=self.headers)
+
+            if status:
+                if 'No results found' in response.text:
+                    pass
+                else:
+                    data = BeautifulSoup(response.text)
+                    hrefs = data.fetch('a')
+
+                    for href in hrefs:
+                        content = href.contents
+
+                        if self.artifact['name'] in content[0]:
+                            try:
+                                name = content[0].split('&lt;')[0]
+                                if isinstance(self.artifact['data']['pgp'], list):
+                                    self.artifact['data']['pgp'].append(name)
+                                else:
+                                    self.artifact['data']['pgp'] = []
+                                    self.artifact['data']['pgp'].append(name)
+                            except IndexError:
+                                pass
+
+        except:
+            pass
+
+
+    def run(self):
+        if self.artifact['type'] == 'email':
+            self.email()
+        elif self.artifact['type'] == 'fqdn':
+            self.fqdn()
+        else:
+            warning('PGP module only accepts artifact types email or fqdn')
+
+
+def main(artifact):
+    plugin = Plugin(artifact)
+    plugin.run()
+    return plugin.artifact

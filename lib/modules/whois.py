@@ -8,44 +8,45 @@ import whois
 from ipwhois import IPWhois
 
 
-def fqdn_run(host):
-    results = None
-
-    try:
-        results = whois.whois(host)
-    except Exception as err:
-        raise err
-        return results
-
-    return results
+class Plugin(object):
+    def __init__(self, artifact):
+        self.artifact = artifact
+        self.artifact['data']['whois'] = None
 
 
-def ip_run(host):
-    results = None
-    whois = IPWhois(host)
+    def ip(self):
+        whois = IPWhois(self.artifact['name'])
 
-    try:
-        data = whois.lookup_rdap(depth=1)
-    except:
-        return results
+        try:
+            data = whois.lookup_rdap(depth=1)
 
-    results = {}
-    if data is not None:
-        results['ASN'] = data['asn']
-        results['Organization'] = data['network']['name'] if 'network' in data.keys() else None
-        results['CIDR'] = data['network']['cidr'] if 'network' in data.keys() else None
-        results['Country'] = data['network']['country'] if 'network' in data.keys() else None
-
-    return results
+            if data is not None:
+                self.artifact['data']['whois'] = {}
+                self.artifact['data']['whois']['ASN'] = data['asn']
+                self.artifact['data']['whois']['Organization'] = data['network']['name'] if 'network' in data.keys() else None
+                self.artifact['data']['whois']['CIDR'] = data['network']['cidr'] if 'network' in data.keys() else None
+                self.artifact['data']['whois']['Country'] = data['network']['cidr'] if 'network' in data.keys() else None
+        except:
+            pass
 
 
-def main(artifact, artifact_type=None):
-    if artifact_type == 'ipv4':
-        result = ip_run(artifact)
-    elif artifact_type == 'fqdn':
-        result = fqdn_run(artifact)
-    else:
-        print('returning None')
-        return None
+    def fqdn(self):
+        try:
+            results = whois.whois(self.artifact['name'])
+            self.artifact['data']['whois'] = results
+        except:
+            pass
 
-    return result
+
+    def run(self):
+        if self.artifact['type'] == 'host':
+            if self.artifact['subtype'] == 'ipv4':
+                self.ip()
+            elif self.artifact['subtype'] == 'fqdn':
+                self.fqdn()
+
+
+def main(artifact):
+    plugin = Plugin(artifact)
+    plugin.run()
+    return plugin.artifact

@@ -5,35 +5,39 @@
 ##
 import threatcrowd
 
-
-def run_ip(ip):
-    result = None
-
-    try:
-        result = threatcrowd.ip_report(ip)
-    except:
-        pass
-
-    return result
+from common import warning
 
 
-def run_fqdn(domain):
-    result = None
-
-    try:
-        result = threatcrowd.domain_report(domain)
-    except:
-        pass
-
-    return result
+class Plugin(object):
+    def __init__(self, artifact):
+        self.artifact = artifact
+        self.artifact['data']['threatcrowd'] = None
 
 
-def main(artifact, artifact_type=None):
-    if artifact_type == 'ipv4':
-        result = run_ip(artifact)
-    elif artifact_type == 'fqdn':
-        result = run_fqdn(artifact)
-    else:
-        return None
+    def ip(self):
+        try:
+            self.artifact['data']['threatcrowd'] = threatcrowd.ip_report(self.artifact['name'])
+        except:
+            pass
 
-    return result
+
+    def fqdn(self):
+        try:
+            self.artifact['data']['threatcrowd'] = threatcrowd.domain_report(self.artifact['name'])
+        except:
+            pass
+
+
+    def run(self):
+        if self.artifact['subtype'] == 'ipv4':
+            self.ip()
+        elif self.artifact['subtype'] == 'fqdn':
+            self.fqdn()
+        else:
+            warning('Threatcrowd module only supports artifacts of type ipv4 or fqdn')
+
+
+def main(artifact):
+    plugin = Plugin(artifact)
+    plugin.run()
+    return plugin.artifact

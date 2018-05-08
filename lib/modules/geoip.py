@@ -5,30 +5,42 @@
 ##
 from http import get
 
-from common import error
+from common import get_apikey
 
 
-def run(host):
-    results = None
-    url = 'http://freegeoip.net/json/%s' % host
-    headers = {
-        'Accept-Encoding': 'gzip, deflate',
-        'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'
-    }
+class Plugin(object):
+    def __init__(self, artifact):
+        self.artifact = artifact
+        self.artifact['data']['geoip'] = None
+        self.api_key = get_apikey('ipstack')
+        self.headers = {
+            'Accept-Encoding': 'gzip, deflate',
+            'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'
+        }
 
-    try:
-        status, response = get(url, headers=headers)
-    except:
-        error('failed to get GeoIP results (%s)' % host)
-        return results
+    def run(self):
+        url = 'http://api.ipstack.com/%s?access_key=%s&hostname=1' % (self.artifact['name'], self.api_key)
 
-    if status:
-        results = response.json()
-        del results['__deprecation_message__']
+        try:
+            status, response = get(url, headers=self.headers)
 
-    return results
+            if status:
+                results = response.json()
+                self.artifact.data['geoip'] = results
+
+                if 'hostname' in results.keys():
+                    if results['hostname'] != self.artifact['name'] and results['hostname'] != '':
+                        self.artifact.children.append({
+                            'name': results['hostname'],
+                            'type': 'host',
+                            'subtype': 'fqdn',
+                            'source': 'ipstack'
+                        })
+        except:
+            pass
 
 
-def main(artifact, artifact_type=None):
-    result = run(artifact)
-    return result
+def main(artifact):
+    plugin = Plugin(artifact)
+    plugin.run()
+    return plugin.artifact

@@ -8,26 +8,40 @@ from http import get
 from common import get_apikey
 
 
-def run(email_addr):
-    result = None
-    key = get_apikey('fullcontact')
-    headers = {
-        'X-FullContact-APIKey': key,
-        'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'
-    }
-
-    try:
-        status, response = get('https://api.fullcontact.com/v2/person.json?email=%s' % email_addr,
-            headers=headers)
-
-        if status:
-            result = response.json()
-    except:
-        pass
-
-    return result
+class Plugin(object):
+    def __init__(self, artifact):
+        self.artifact = artifact
+        self.artifact['data']['fullcontact'] = None
+        self.api_key = get_apikey('fullcontact')
+        self.headers = {
+            'X-FullContact-APIKey': self.api_key,
+            'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'
+        }
 
 
-def main(artifact, artifact_type):
-    result = run(artifact)
-    return result
+    def run(self):
+        try:
+            status, response = get('https://api.fullcontact.com/v2/person.json?email=%s' % self.artifact['name'],
+                headers=self.headers)
+
+            if status:
+                self.artifact['data']['fullcontact'] = response.json()
+
+                if 'socialProfiles' in self.artifact['data']['fullcontact'].keys():
+                    for profile in self.artifact['data']['fullcontact']['socialProfiles']:
+                        child = {
+                            'type': 'user',
+                            'name': profile['username'],
+                            'source': 'fullcontact',
+                            'subtype': profile['type']
+                        }
+                        self.artifact['children'].append(child)
+
+        except:
+            pass
+
+
+def main(artifact):
+    plugin = Plugin(artifact)
+    plugin.run()
+    return plugin.artifact

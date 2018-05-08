@@ -6,21 +6,24 @@
 from http import get
 
 
-def run(btc_addr):
-    result = None
-    url = 'https://blockchain.info/rawaddr/%s' % btc_addr
-    headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
+class Plugin(object):
+    def __init__(self, artifact):
+        self.artifact = artifact
+        self.artifact['data']['blockchain'] = None
+        self.headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
 
-    try:
-        status, response = get(url, headers=headers)
-        if status:
-            result = response.json()
-    except:
-        pass
+    def run(self):
+        url = 'https://blockchain.info/rawaddr/%s' % self.artifact['name']
 
-    return result
+        try:
+            status, response = get(url, headers=self.headers)
+            if status:
+                self.artifact['data']['blockchain'] = response.json()
+        except:
+            pass
 
 
-def main(artifact, artifact_type=None):
-    result = run(artifact)
-    return result
+def main(artifact):
+    plugin = Plugin(artifact)
+    plugin.run()
+    return plugin.artifact

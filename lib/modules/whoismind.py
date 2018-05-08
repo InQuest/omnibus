@@ -1,35 +1,41 @@
 #!/usr/bin/env python
 ##
 # omnibus - deadbits.
-# dns sub-domain brute force module
+# Whois Mind lookup module
 ##
 import BeautifulSoup
 
 from http import get
 
 
-def run(email_addr):
-    result = None
-    url = 'http://www.whoismind.com/emails/%s.html' % email_addr
-    headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
-
-    try:
-        status, response = get(url, headers=headers)
-    except:
-        return result
-
-    if status:
-        result = []
-
-        content = BeautifulSoup(response.content, 'lxml')
-        a_tag = content.findAll('a')
-        for tag in a_tag:
-            if tag.text in tag['href'] and tag.text not in result:
-                result.append(tag.text)
-
-    return result
+class Plugin(object):
+    def __init__(self, artifact):
+        self.artifact = artifact
+        self.artifact['data']['whoismind'] = None
+        self.headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
 
 
-def main(artifact, artifact_type=None):
-    result = run(artifact)
-    return result
+    def run(self):
+        url = 'http://www.whoismind.com/emails/%s.html' % self.artifact['name']
+
+        try:
+            status, response = get(url, headers=self.headers)
+            if status:
+                self.artifact['data']['whoismind'] = []
+
+                content = BeautifulSoup(response.content, 'lxml')
+                a_tag = content.findAll('a')
+                for tag in a_tag:
+                    if tag.text in tag['href'] and tag.text not in self.artifact['data']['whoismind']:
+                        self.artifact['data']['whoismind'].append(tag.text)
+
+                if len(self.data['data']['whoismind']) == 0:
+                    self.data['data']['whoismind'] = None
+        except:
+            pass
+
+
+def main(artifact):
+    plugin = Plugin(artifact)
+    plugin.run()
+    return plugin.artifact

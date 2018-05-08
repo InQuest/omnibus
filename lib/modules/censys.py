@@ -9,24 +9,27 @@ from http import get
 from common import get_apikey
 
 
-def run(host):
-    result = None
-    key = get_apikey('censys')
-    url = 'https://censys.io/api/v1/view/ipv4/%s' % host
-    headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
+class Plugin(object):
+    def __init__(self, artifact):
+        self.artifact = artifact
+        self.artifact['data']['censys'] = None
+        self.api_key = get_apikey('censys')
+        self.headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
 
 
-    try:
-        status, response = get(url, auth=(key['token'], key['secret']), headers=headers)
-    except:
-        return result
+    def run(self):
+        url = 'https://censys.io/api/v1/view/ipv4/%s' % self.artifact['name']
 
-    if status:
-        result = response.json()
+        try:
+            status, response = get(url, auth=(self.api_key['token'], self.api_key['secret']), headers=self.headers)
 
-    return result
+            if status:
+                self.artifact['data']['censys'] = response.json()
+        except:
+            pass
 
 
-def main(artifact, artifact_type=None):
-    result = run(artifact)
-    return result
+def main(artifact):
+    plugin = Plugin(artifact)
+    plugin.run()
+    return plugin.artifact

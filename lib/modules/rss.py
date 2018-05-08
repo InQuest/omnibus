@@ -7,16 +7,29 @@
 import feedparser
 
 
-def run(feed_url):
-    result = None
+class Plugin(object):
+    def __init__(self, feed_url):
+        self.url = feed_url
+        self.results = []
 
-    try:
-        feed = feedparser.parse(feed_url)
-        result = []
-        for idx, item in enumerate(feed['entries']):
-            if idx == 19:
-                break
 
-    except:
-        return result
+    def run(self):
+        try:
+            feed = feedparser.parse(self.url)
+            for idx, item in enumerate(feed['entries']):
+                if idx == 19:
+                    break
+                else:
+                    self.results.append({
+                        'url': item['url'],
+                        'title': item['title']
+                    })
+        except:
+            pass
 
+
+
+def main(artifact):
+    plugin = Plugin(artifact)
+    plugin.run()
+    return plugin.results

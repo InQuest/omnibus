@@ -8,46 +8,45 @@ from http import get
 from common import get_apikey
 
 
-def fqdn_run(host):
-    result = None
-    api_key = get_apikey('shodan')
-    url = 'https://api.shodan.io/shodan/host/search?key=%s&query=hostname:%s&facets={facets}' % (api_key, host)
-    headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus'}
+class Plugin(object):
+    def __init__(self, artifact):
+        self.artifact = artifact
+        self.artifact['data']['shodan'] = None
+        self.api_key = get_apikey('shodan')
+        self.headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus'}
 
-    try:
-        status, response = get(url, headers=headers)
-    except:
-        return result
+    def fqdn(self):
+        url = 'https://api.shodan.io/shodan/host/search?key=%s&query=hostname:%s&facets={facets}' % (self.api_key, self.artifact['name'])
 
-    if status:
-        result = response.json()
+        try:
+            status, response = get(url, headers=self.headers)
 
-    return result
-
-
-def ip_run(host):
-    result = None
-    api_key = get_apikey('shodan')
-    url = 'https://api.shodan.io/shodan/host/%s?key=%s' % (host, api_key)
-    headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus'}
-
-    try:
-        status, response = get(url, headers=headers)
-    except:
-        return result
-
-    if status:
-        result = response.json()
-
-    return result
+            if status:
+                self.artifact['data']['shodan'] = response.json()
+        except:
+            pass
 
 
-def main(artifact, artifact_type):
-    if artifact_type == 'ipv4':
-        result = ip_run(artifact)
-    elif artifact_type == 'fqdn':
-        result = fqdn_run(artifact)
-    else:
-        return None
+    def ip(self):
+        url = 'https://api.shodan.io/shodan/host/%s?key=%s' % (self.artifact['name'], self.api_key)
 
-    return result
+        try:
+            status, response = get(url, headers=self.headers)
+
+            if status:
+                self.artifact['data']['shodan'] = response.json()
+        except:
+            pass
+
+
+    def run(self):
+        if self.artifact['subtype'] == 'ipv4':
+            self.ip()
+        elif self.artifact['subtype'] == 'fqdn':
+            self.fqdn()
+
+
+def main(artifact):
+    plugin = Plugin(artifact)
+    plugin.run()
+    return plugin.results

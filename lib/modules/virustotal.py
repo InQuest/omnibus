@@ -5,87 +5,104 @@
 ##
 from http import get
 
-from common import is_hash
-from common import is_ipv4
-from common import is_fqdn
 from common import get_apikey
+from common import detect_type
 
 
-def run_ip(ip):
-    result = None
-    vt_api = get_apikey('virustotal')
-    parameters = {'ip': ip, 'apikey': vt_api}
-    url = 'https://www.virustotal.com/vtapi/v2/ip-address/report'
-
-    if not is_ipv4(ip):
-        return None
-
-    try:
-        status, response = get(url, params=parameters)
-    except:
-        return result
-
-    if status:
-        data = response.json()
-        if data['response_code'] == 1:
-            result = data
-
-    return result
+class Plugin(object):
+    def __init__(self, artifact):
+        self.artifact = artifact
+        self.artifact['data']['virustotal'] = None
+        self.api_key = get_apikey('virustotal')
+        self.headers = {
+            'Accept-Encoding': 'gzip, deflate',
+            'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'
+        }
 
 
+    def ip(self):
+        parameters = {'ip': self.artifact['name'], 'apikey': self.api_key}
+        url = 'https://www.virustotal.com/vtapi/v2/ip-address/report'
 
-def run_fqdn(domain):
-    result = None
-    vt_api = get_apikey('virustotal')
-    parameters = {'domain': domain, 'apikey': vt_api}
-    url = 'https://www.virustotal.com/vtapi/v2/domain/report'
+        try:
+            status, response = get(url, params=parameters)
 
-    if not is_fqdn(domain):
-        return None
+            if status:
+                data = response.json()
+                if data['response_code'] == 1:
+                    self.artifact['data']['virustotal'] = data
 
-    try:
-        status, response = get(url, params=parameters)
-    except:
-        return result
+                    if len(data['resolutions']) > 0:
+                        for host in data['resolutions']:
+                            if detect_type(host['hostname']) == 'host':
+                                self.artifact['children'].append({
+                                    'name': host['hostname'],
+                                    'type': 'host',
+                                    'subtype': 'fqdn',
+                                    'source': 'VirusTotal'
+                                })
 
-    if status:
-        data = response.json()
-        if data['response_code'] == 1:
-            result = data
-
-    return result
-
-
-def run_hash(file_hash):
-    result = None
-    vt_api = get_apikey('virustotal')
-    parameters = {'resource': file_hash, 'apikey': vt_api}
-    url = 'https://www.virustotal.com/vtapi/v2/file/report'
-
-    if not is_hash(file_hash):
-        return None
-
-    try:
-        status, response = get(url, params=parameters)
-    except:
-        return result
-
-    if status:
-        data = response.json()
-        if data['response_code'] == 1:
-            result = data
-
-    return result
+        except:
+            pass
 
 
-def main(artifact, artifact_type=None):
-    if artifact_type == 'hash':
-        result = run_hash(artifact)
-    elif artifact_type == 'ipv4':
-        result = run_ip(artifact)
-    elif artifact_type == 'fqdn':
-        result = run_fqdn(artifact)
-    else:
-        return None
+    def fqdn(self):
+        parameters = {'domain': self.artifact['name'], 'apikey': self.api_key}
+        url = 'https://www.virustotal.com/vtapi/v2/domain/report'
 
-    return result
+        try:
+            status, response = get(url, params=parameters)
+
+            if status:
+                data = response.json()
+                if data['response_code'] == 1:
+                    self.artifact['data']['virustotal'] = data
+
+                    if len(data['resolutions']) > 0:
+                        for host in data['resolutions']:
+                            if detect_type(host['ip_address']) == 'host':
+                                self.artifact['children'].append({
+                                    'name': host['ip_address'],
+                                    'type': 'host',
+                                    'subtype': 'ipv4',
+                                    'source': 'VirusTotal'
+                                })
+        except:
+            pass
+
+
+    def hash(self):
+        parameters = {'resource': self.artifact['name'], 'apikey': self.api_key}
+        url = 'https://www.virustotal.com/vtapi/v2/file/report'
+
+
+        try:
+            status, response = get(url, params=parameters)
+
+            if status:
+                data = response.json()
+
+                if data['response_code'] == 1:
+                    for av in data['scans'].keys():
+                        if data['scans'][av]['detected'] is False:
+                            del data['scans'][av]
+
+                    self.artifact['data']['virustotal'] = data
+        except:
+            pass
+
+
+    def run(self):
+        if self.artifact['type'] == 'host':
+            if self.artifact['subtype'] == 'ipv4':
+                self.ip()
+            elif self.artifact['subtype'] == 'fqdn':
+                self.fqdn()
+        elif self.artifact['type'] == 'hash':
+            self.hash()
+
+
+def main(artifact):
+    plugin = Plugin(artifact)
+    plugin.run()
+    return plugin.artifact

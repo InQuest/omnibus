@@ -3,38 +3,40 @@
 # omnibus - deadbits.
 # clearbit email lookup module
 ##
-import json
-
 from http import get
 
 from common import warning
 from common import get_apikey
 
 
-def run(email_address):
-    result = None
-    api_key = get_apikey('clearbit')
-    url = 'https://person.clearbit.com/v1/people/email/%s' % email_address
-    headers = {
-        'Authorization': 'Bearer %s' % api_key,
-        'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'
-    }
-
-    try:
-        status, response = get(url, headers=headers)
-    except:
-        return result
-
-    if status:
-        if 'error' in response.content and 'queued' in response.content:
-            warning('results are queued by Clearbit. please re-run module after 5-10 minutes.')
-            return result
-
-        result = json.loads(response.content)
-
-    return result
+class Plugin(object):
+    def __init__(self, artifact):
+        self.artifact = artifact
+        self.artifact['data']['clearbit'] = None
+        self.api_key = get_apikey('clearbit')
 
 
-def main(artifact, artifact_type=None):
-    result = run(artifact)
-    return result
+    def run(self):
+        url = 'https://person.clearbit.com/v1/people/email/%s' % self.artifact['name']
+        headers = {
+            'Authorization': 'Bearer %s' % self.api_key,
+            'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'
+        }
+
+        try:
+            status, response = get(url, headers=headers)
+
+            if status:
+                if 'error' in response.content and 'queued' in response.content:
+                    warning('results are queued by Clearbit. please re-run module after 5-10 minutes.')
+                else:
+                    self.artifact['data']['fullcontact'] = response.json()
+
+        except:
+            pass
+
+
+def main(artifact):
+    plugin = Plugin(artifact)
+    plugin.run()
+    return plugin.artifact

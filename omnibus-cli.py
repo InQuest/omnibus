@@ -28,39 +28,34 @@ from lib.common import error
 from lib.common import running
 from lib.common import success
 from lib.common import warning
+from lib.common import bold_msg
 
-from lib.common import jsondate
+from lib.common import pp_json
 from lib.common import lookup_key
 from lib.common import detect_type
 
 from lib.common import read_file
 from lib.common import get_option
 
-from lib.models import Hash
-from lib.models import Host
-from lib.models import User
-from lib.models import Email
-from lib.models import BitcoinAddress
+from lib.models import create_artifact
 
 
 help_dict = {
     'general': [
-        'help', 'history', 'quit', 'cat apikeys', 'add apikey', 'banner'
+        'help', 'history', 'quit', 'cat', 'apikey', 'banner', 'set', 'clear', 'artifacts', 'general',
+        'redirect', 'sessions', 'modules'
     ],
     'artifacts': [
-        'cat', 'rm', 'open', 'source'
+        'new', 'cat', 'open', 'source', 'artifacts', 'delete'
     ],
     'modules': [
-        'abusech', 'alienvault', 'blockchain', 'clearbit', 'censys', 'cymon',
-        'dnsbrute', 'dnsresolve', 'geoip', 'fullcontact', 'gist', 'gitlab', 'github', 'hackedemails', 'hibp',
-        'hunter', 'ipinfo', 'ipvoid', 'isc', 'keybase', 'mdl', 'nmap', 'passivetotal', 'pastebin', 'phishtank',
-        'projecthp', 'reddit', 'rss', 'run', 'shodan', 'ssl', 'securitynews', 'threatcrowd',
-        'threatexpert', 'totalhash', 'twitter', 'urlvoid', 'usersearch', 'virustotal', 'vxvault', 'web', 'whois'],
+        'blockchain', 'clearbit', 'censys', 'csirtg', 'cymon',
+        'dnsbrute', 'dnsresolve', 'geoip', 'fullcontact', 'gist', 'gitlab', 'github', 'hackedemails', 'he', 'hibp',
+        'hunter', 'ipinfo', 'ipvoid', 'isc', 'keybase', 'machine', 'nmap', 'passivetotal', 'pastebin', 'phishtank',
+        'projecthp', 'pgp', 'reddit', 'rss', 'shodan', 'ssl', 'securitynews', 'threatcrowd',
+        'threatexpert', 'totalhash', 'twitter', 'urlvoid', 'usersearch', 'virustotal', 'web', 'whois'],
     'sessions': [
-        'session', 'ls', 'clear'
-    ],
-    'machines': [
-        'machine fqdn', 'machine ip', 'machine email', 'machine btc', 'machine user'
+        'session', 'ls', 'rm', 'wipe'
     ]
 }
 
@@ -74,7 +69,7 @@ class Console(cmd2.Cmd):
 
         self.allow_cli_args = False
         self.default_to_shell = False
-        self.intro = 'Welcome to the Omnibus shell! Type "help" to get started'
+        self.intro = 'Welcome to the Omnibus shell! Type "session" to get started or "help" to view all commands.'
         self.allow_redirection = True
         self.prompt = 'omnibus >> '
         self.redirector = '>'
@@ -114,7 +109,10 @@ class Console(cmd2.Cmd):
 
     def default(self, arg):
         """Override default function for custom error message"""
-        error('Unknown command: %s' % arg)
+        if arg.startswith('#'):
+            return
+
+        error('Unknown command')
         return
 
 
@@ -137,30 +135,28 @@ class Console(cmd2.Cmd):
 
     def do_modules(self, arg):
         """Show module list"""
-        print('[ Modules ]')
+        bold_msg('[ Modules ]')
         for cmd in help_dict['modules']:
             print(cmd)
 
 
     def do_artifacts(self, arg):
         """Show artifact information and available commands"""
-        print('[ Documentation ]')
-        print('Artifacts ')
-        print('[ Commands ]')
+        bold_msg('[ Artifacts ]')
         for cmd in help_dict['artifacts']:
             print(cmd)
 
 
     def do_general(self, arg):
         """Show general commands"""
-        print('[ General Commands ]')
+        bold_msg('[ General Commands ]')
         for cmd in help_dict['general']:
             print(cmd)
 
 
     def do_sessions(self, arg):
         """Show session commands"""
-        print('[ Session Commands ]')
+        bold_msg('[ Session Commands ]')
         for cmd in help_dict['sessions']:
             print(cmd)
 
@@ -199,30 +195,6 @@ class Console(cmd2.Cmd):
         info('Active Artifacts: %d' % count)
 
 
-    def do_find(self, arg):
-        """Search Mongo for artifact and display results
-
-Usage: find <artifact name>
-       find <session id> """
-        is_key, value = lookup_key(self.session, arg)
-
-        if is_key and value is None:
-            error('Unable to find artifact key in session (%s)' % arg)
-            return
-        elif is_key and value is not None:
-            arg = value
-        else:
-            pass
-
-        artifact_type = detect_type(arg)
-
-        running('Searching for artifact (%s)' % arg)
-
-        res = self.db.find(artifact_type, {'name': arg}, one=True)
-        if res:
-            print(json.dumps(res, indent=4, default=jsondate))
-
-
     def do_wipe(self, arg):
         """Clear currently active artifacts """
         if self.session is not None:
@@ -236,7 +208,7 @@ Usage: find <artifact name>
     def do_rm(self, arg):
         """Remove artifact from session by ID
 
-Usage: rm <session id>"""
+        Usage: rm <session id>"""
         try:
             arg = int(arg)
         except:
@@ -256,39 +228,20 @@ Usage: rm <session id>"""
     def do_new(self, arg):
         """Create a new artifact
 
-Artifacts are created by their name. An IP address artifacts name would be the IP address itself,
-an FQDN artifacts name is the domain name, and so on.
+        Artifacts are created by their name. An IP address artifacts name would be the IP address itself,
+        an FQDN artifacts name is the domain name, and so on.
 
-Usage: new <artifact name> """
-        _type = detect_type(arg)
+        Usage: new <artifact name> """
+        artifact = create_artifact(arg)
 
-        if _type == 'email':
-            item = Email(email_address=arg)
-
-        elif _type == 'host':
-            item = Host(host=arg)
-
-        elif _type == 'user':
-            item = User(username=arg)
-
-        elif _type == 'hash':
-            item = Hash(hash=arg)
-
-        elif _type == 'bitcoin':
-            item = BitcoinAddress(addr=arg)
-
-        else:
-            warning('Must specify one of type: email, host, user, bitcoin')
-            return
-
-        if not self.db.exists(_type, {'name': arg}):
-            _id = self.db.insert_one(_type, item)
-            if _id is not None:
-                success('Indexed new artifact for analysis. MongoDB ID (%s)' % _id)
+        if not self.db.exists(artifact.type, {'name': artifact.name}):
+            doc_id = self.db.insert_one(artifact.type, artifact)
+            if doc_id is not None:
+                success('Created new artifact (%s - %s)' % (artifact.name, artifact.type))
 
         if self.session is None:
             self.session = RedisCache(config)
-            self.session.set(1, arg)
+            self.session.set(1, artifact.name)
             success('Opened new session')
             print('Artifact ID: 1')
         else:
@@ -296,15 +249,15 @@ Usage: new <artifact name> """
             for key in self.session.db.scan_iter():
                 count += 1
             _id = count + 1
-            self.session.set(_id, arg)
+            self.session.set(_id, artifact.name)
             print('Artifact ID: %s' % _id)
 
 
     def do_delete(self, arg):
         """Remove artifact from database by name or ID
 
-Usage: delete <name>
-       delete <session id>"""
+        Usage: delete <name>
+               delete <session id>"""
         is_key, value = lookup_key(self.session, arg)
 
         if is_key and value is None:
@@ -322,8 +275,8 @@ Usage: delete <name>
     def do_cat(self, arg):
         """View artifact details or list API keys
 
-Usage: cat apikeys
-       cat <artifact name>"""
+        Usage: cat apikeys
+               cat <artifact name>"""
         if arg == 'apikeys':
             data = json.load(open(common.API_CONF, 'rb'))
             print json.dumps(data, indent=2)
@@ -349,60 +302,35 @@ Usage: cat apikeys
     def do_open(self, arg):
         """Load text file list of artifacts
 
-Command will detect each line items artifact type, create the artifact,
-and add it to the current session if there is one.
+        Command will detect each line items artifact type, create the artifact,
+        and add it to the current session if there is one.
 
-Usage: open <path/to/file.txt> """
+        Usage: open <path/to/file.txt> """
         if not os.path.exists(arg):
             warning('Cannot find file on disk (%s)' % arg)
             return
 
         artifacts = read_file(arg, True)
         for artifact in artifacts:
-            a = None
-            artifact_type = detect_type(artifact)
+            new_artifact = create_artifact(artifact)
 
-            if artifact_type == 'host':
-                a = Host(host=artifact)
+            if not self.db.exists(new_artifact.type, {'name': new_artifact.name}):
+                doc_id = self.db.insert_one(new_artifact.type, new_artifact)
+                if doc_id is not None:
+                    success('Created new artifact (%s - %s)' % (artifact.name, artifact.type))
 
-                if not self.db.exists(artifact_type, {'name': artifact}):
-                    self.db.insert_one(artifact_type, a)
-
-            elif artifact_type == 'email':
-                a = Email(artifact)
-
-                if not self.db.exists(artifact_type, {'name': artifact}):
-                    self.db.insert_one(artifact_type, a)
-
-            elif artifact_type == 'hash':
-                a = Hash(artifact)
-
-                if not self.db.exists(artifact_type, {'name': artifact}):
-                    self.db.insert_one(artifact_type, a)
-
-            elif artifact_type == 'btc':
-                a = BitcoinAddress(artifact)
-
-                if not self.db.exists(artifact_type, {'name': artifact}):
-                    self.db.insert_one(artifact_type, a)
-
-            elif artifact_type == 'user':
-                a = User(artifact)
-
-                if not self.db.exists(artifact_type, {'name': artifact}):
-                    self.db.insert_one(artifact_type, a)
-
+            if self.session is None:
+                self.session = RedisCache(config)
+                self.session.set(1, arg)
+                success('Opened new session')
+                print('Artifact ID: 1')
             else:
-                info('Cannot determine type for artifact (%s)' % artifact)
-
-            if a is not None:
-                if self.session is not None:
-                    count = 0
-                    for key in self.session.db.scan_iter():
-                        count += 1
-                    _id = count + 1
-                    self.session.set(_id, artifact)
-                    print('[%s] %s (%s)' % (_id, artifact, artifact_type))
+                count = 0
+                for key in self.session.db.scan_iter():
+                    count += 1
+                _id = count + 1
+                self.session.set(_id, arg)
+                print('Artifact ID: %s' % _id)
 
         success('Finished loading artifact list')
 
@@ -410,8 +338,8 @@ Usage: open <path/to/file.txt> """
     def do_report(self, arg):
         """Save artifact report as JSON file
 
-Usage: report <artifact name>
-       report <session id>"""
+        Usage: report <artifact name>
+               report <session id>"""
         is_key, value = lookup_key(self.session, arg)
 
         if is_key and value is None:
@@ -439,9 +367,10 @@ Usage: report <artifact name>
     def do_machine(self, arg):
         """Run all modules available for an artifacts type
 
-Usage: machine <artifact name>
-       machine <session id>"""
-        self.dispatch.machine(self.session, arg)
+        Usage: machine <artifact name>
+               machine <session id>"""
+        result = self.dispatch.machine(self.session, arg)
+        pp_json(result)
 
 
     def do_abusech(self, arg):
@@ -449,24 +378,28 @@ Usage: machine <artifact name>
         pass
 
 
-    def do_alienvault(self, arg):
-        """Search AlienVault for artifact """
-        pass
-
-
     def do_clearbit(self, arg):
         """Search Clearbit for email address """
-        self.dispatch.submit(self.session, 'clearbit', arg)
+        result = self.dispatch.submit(self.session, 'clearbit', arg)
+        pp_json(result)
 
 
     def do_censys(self, arg):
         """Search Censys for IPv4 address """
-        self.dispatch.submit(self.session, 'censys', arg)
+        result = self.dispatch.submit(self.session, 'censys', arg)
+        pp_json(result)
+
+
+    def do_csirtg(self, arg):
+        """Search CSIRTG for hash information"""
+        result = self.dispatch.submit(self.session, 'csirtg', arg)
+        pp_json(result)
 
 
     def do_cymon(self, arg):
         """Search Cymon for host """
-        self.dispatch.submit(self.session, 'cymon', arg)
+        result = self.dispatch.submit(self.session, 'cymon', arg)
+        pp_json(result)
 
 
     def do_dnsbrute(self, arg):
@@ -476,17 +409,20 @@ Usage: machine <artifact name>
 
     def do_dnsresolve(self, arg):
         """Retrieve DNS records for host """
-        self.dispatch.submit(self.session, 'dnsresolve', arg)
+        result = self.dispatch.submit(self.session, 'dnsresolve', arg)
+        pp_json(result)
 
 
     def do_geoip(self, arg):
         """Retrieve Geolocation details for host """
-        self.dispatch.submit(self.session, 'geoip', arg)
+        result = self.dispatch.submit(self.session, 'geoip', arg)
+        pp_json(result)
 
 
     def do_fullcontact(self, arg):
         """Search FullContact for email address """
-        pass
+        result = self.dispatch.submit(self.session, 'fullcontact', arg)
+        pp_json(result)
 
 
     def do_gist(self, arg):
@@ -501,37 +437,50 @@ Usage: machine <artifact name>
 
     def do_github(self, arg):
         """Check GitHub for active username"""
-        self.dispatch.submit(self.session, 'github', arg)
+        result = self.dispatch.submit(self.session, 'github', arg)
+        pp_json(result)
 
 
     def do_hackedemails(self, arg):
         """Check hacked-emails.com for email address"""
-        self.dispatch.submit(self.session, 'hackedemails', arg)
+        result = self.dispatch.submit(self.session, 'hackedemails', arg)
+        pp_json(result)
+
+
+    def do_he(self, arg):
+        """Search Hurricane Electric for host"""
+        result = self.dispatch.submit(self.session, 'he', arg)
+        pp_json(result)
 
 
     def do_hibp(self, arg):
         """Check HaveIBeenPwned for email address"""
-        self.dispatch.submit(self.session, 'hibp', arg)
+        result = self.dispatch.submit(self.session, 'hibp', arg)
+        pp_json(result)
 
 
     def do_ipinfo(self, arg):
         """Retrieve ipinfo resutls for host"""
-        self.dispatch.submit(self.session, 'ipinfo', arg)
+        result = self.dispatch.submit(self.session, 'ipinfo', arg)
+        pp_json(result)
 
 
     def do_ipvoid(self, arg):
         """Search IPVoid for host"""
-        self.dispatch.submit(self.session, 'ipvoid', arg)
+        result = self.dispatch.submit(self.session, 'ipvoid', arg)
+        pp_json(result)
 
 
     def do_isc(self, arg):
         """Search SANS ISC for host"""
-        self.dispatch.submit(self.session, 'sans', arg)
+        result = self.dispatch.submit(self.session, 'sans', arg)
+        pp_json(result)
 
 
     def do_keybase(self, arg):
         """Search Keybase for active username"""
-        self.dispatch.submit(self.session, 'keybase', arg)
+        result = self.dispatch.submit(self.session, 'keybase', arg)
+        pp_json(result)
 
 
     def do_monitor(self, arg):
@@ -546,17 +495,31 @@ Usage: machine <artifact name>
 
     def do_nmap(self, arg):
         """Run NMap discovery scan against host"""
-        self.dispatch.submit(self.session, 'nmap', arg)
+        result = self.dispatch.submit(self.session, 'nmap', arg)
+        pp_json(result)
+
+
+    def do_otx(self, arg):
+        """Search AlienVault OTX for host or hash artifacts"""
+        result = self.dispatch.submit(self.session, 'otx', arg)
+        pp_json(result)
 
 
     def do_passivetotal(self, arg):
         """Search PassiveTotal for host"""
-        self.dispatch.submit(self.session, 'passivetotal', arg)
+        result = self.dispatch.submit(self.session, 'passivetotal', arg)
+        pp_json(result)
 
 
     def do_pastebin(self, arg):
         """Search Pastebin for artifact as string"""
         pass
+
+
+    def do_pgp(self, arg):
+        """Search PGP records for email address or user"""
+        result = self.dispatch.submit(self.session, 'pgp', arg)
+        pp_json(result)
 
 
     def do_projecthp(self, arg):
@@ -573,29 +536,27 @@ Usage: machine <artifact name>
         """Read latest from RSS feed
 
         Usage: rss <feed url>"""
-        self.dispatch.submit(self.session, 'rss', arg, True)
+        result = self.dispatch.submit(self.session, 'rss', arg, True)
+        pp_json(result)
 
-
-    def do_run(self, arg):
-        """Run all modules for artifact type
-
-        Usage: run <artifact name>"""
 
     def do_securitynews(self, arg):
         """Get current cybersecurity headlines from Google News"""
-        self.dispatch.submit(self.session, 'securitynews', arg, True)
+        result = self.dispatch.submit(self.session, 'securitynews', arg, True)
+        pp_json(result)
 
 
     def do_shodan(self, arg):
         """Query Shodan for host"""
-        self.dispatch.submit(self.session, 'shodan', arg)
+        result = self.dispatch.submit(self.session, 'shodan', arg)
+        pp_json(result)
 
 
     def do_source(self, arg):
         """Add source to given artifact or most recently added artifact if not specified
 
-Usage: source                            # adds to last created artifact
-       source <artifact name|session id> # adds to specific artifact
+        Usage: source                            # adds to last created artifact
+               source <artifact name|session id> # adds to specific artifact
         """
         if arg == '':
             last = self.session.receive('artifacts')
@@ -621,12 +582,14 @@ Usage: source                            # adds to last created artifact
 
     def do_threatcrowd(self, arg):
         """Search ThreatCrowd for host"""
-        self.dispatch.submit(self.session, 'threatcrowd', arg)
+        result = self.dispatch.submit(self.session, 'threatcrowd', arg)
+        pp_json(result)
 
 
     def do_threatexpert(self, arg):
         """Search ThreatExpert for host"""
-        pass
+        result = self.dispatch.submit(self.session, 'threatexpert', arg)
+        pp_json(result)
 
 
     def do_totalhash(self, arg):
@@ -641,7 +604,8 @@ Usage: source                            # adds to last created artifact
 
     def do_urlvoid(self, arg):
         """Search URLVoid for domain name"""
-        self.dispatch.submit(self.session, 'urlvoid', arg)
+        result = self.dispatch.submit(self.session, 'urlvoid', arg)
+        pp_json(result)
 
 
     def do_usersearch(self, arg):
@@ -651,7 +615,8 @@ Usage: source                            # adds to last created artifact
 
     def do_virustotal(self, arg):
         """Search VirusTotal for IPv4, FQDN, or Hash"""
-        self.dispatch.submit(self.session, 'virustotal', arg)
+        result = self.dispatch.submit(self.session, 'virustotal', arg)
+        pp_json(result)
 
 
     def do_vxvault(self, arg):
@@ -665,12 +630,14 @@ Usage: source                            # adds to last created artifact
 
     def do_whois(self, arg):
         """Perform WHOIS lookup on host"""
-        self.dispatch.submit(self.session, 'whois', arg)
+        result = self.dispatch.submit(self.session, 'whois', arg)
+        pp_json(result)
 
 
     def do_whoismind(self, arg):
         """Search Whois Mind for domains associated to an email address"""
-        self.dispatch.submit(self.session, 'whoismind', arg)
+        result = self.dispatch.submit(self.session, 'whoismind', arg)
+        pp_json(result)
 
 
 if __name__ == '__main__':

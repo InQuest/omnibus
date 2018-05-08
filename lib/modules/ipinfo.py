@@ -6,22 +6,26 @@
 from http import get
 
 
-def run(host):
-    results = None
-    url = 'http://ipinfo.io/%s/json' % host
-    headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus'}
-
-    try:
-        status, response = get(url, headers=headers)
-    except:
-        return results
-
-    if status:
-        results = response.json()
-
-    return results
+class Plugin(object):
+    def __init__(self, artifact):
+        self.artifact = artifact
+        self.artifact['data']['ipinfo'] = None
+        self.headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
 
 
-def main(artifact, artifact_type=None):
-    result = run(artifact)
-    return result
+    def run(self):
+        url = 'http://ipinfo.io/%s/json' % self.artifact['name']
+
+        try:
+            status, response = get(url, auth=(self.api_key['token'], self.api_key['secret']), headers=self.headers)
+
+            if status:
+                self.artifact['data']['ipinfo'] = response.json()
+        except:
+            pass
+
+
+def main(artifact):
+    plugin = Plugin(artifact)
+    plugin.run()
+    return plugin.artifact

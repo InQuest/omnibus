@@ -6,18 +6,30 @@
 import dshield
 
 
-def run(host):
-    result = None
-
-    try:
-        data = dshield.ip(host)
-        result = data['ip']
-    except:
-        pass
-
-    return result
+class Plugin(object):
+    def __init__(self, artifact):
+        self.artifact = artifact
+        self.artifact['data']['sans'] = None
 
 
-def main(artifact, artifact_type=None):
-    result = run(artifact)
-    return result
+    def run(self):
+        try:
+            data = dshield.ip(self.artifact['name'])
+            if isinstance(data, dict):
+                if 'ip' in data.keys():
+                    self.artifact['data']['sans'] = data['ip']
+                    if data['ip']['hostname'] != '':
+                        self.artifact['children'].append({
+                            'name': data['ip']['hostname'],
+                            'type': 'host',
+                            'source': 'SANS ISC',
+                            'subtype': 'fqdn'
+                        })
+        except:
+            pass
+
+
+def main(artifact):
+    plugin = Plugin(artifact)
+    plugin.run()
+    return plugin.artifact

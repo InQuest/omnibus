@@ -8,6 +8,9 @@ import ConfigParser
 
 from hashlib import sha256
 
+from pygments import lexers
+from pygments import highlight
+from pygments import formatters
 
 jsondate = lambda obj: obj.isoformat() if isinstance(obj, datetime) else None
 
@@ -36,6 +39,11 @@ END_COLOR = '\033[0m'
 API_CONF = '%s/etc/apikeys.json' % os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 
 
+def bold_msg(msg):
+    """Bold a message"""
+    print('%s%s%s' % (BOLD, msg, END_COLOR))
+
+
 def info(msg):
     """ Informational message """
     print('%s%s[*]%s %s' % (BOLD, DARKBLUE, END_COLOR, msg))
@@ -59,6 +67,13 @@ def warning(msg):
 def error(msg):
     """ Error that stops proper task completion message """
     print('%s%s[!]%s %s' % (BOLD, RED, END_COLOR, msg))
+
+
+def pp_json(data):
+    if data is None:
+        pass
+    else:
+        print(highlight(unicode(json.dumps(data, indent=4, default=jsondate), 'UTF-8'), lexers.JsonLexer(), formatters.TerminalFormatter()))
 
 
 def get_option(section, name, conf):

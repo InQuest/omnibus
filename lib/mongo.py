@@ -75,7 +75,6 @@ class Mongo(object):
             doc_id = coll.update(query, {'$set': new_data})
         except:
             error('failed to update documents: %s' % query)
-            pass
 
         return doc_id
 

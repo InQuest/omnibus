@@ -5,52 +5,44 @@
 ##
 from http import get
 
-from common import is_email
+
+class Plugin(object):
+    def __init__(self, artifact):
+        self.artifact = artifact
+        self.artifact['data']['hibp'] = {'breaches': None, 'pastes': None}
+        self.headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
 
 
-def check_breaches(account):
-    results = None
-    url = 'https://haveibeenpwned.com/api/v2/breachedaccount/%s' % account
-    headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
+    def breaches(self):
+        url = 'https://haveibeenpwned.com/api/v2/breachedaccount/%s' % self.artifact['name']
 
-    try:
-        status, response = get(url, headers=headers)
-    except:
-        return results
-
-    if status:
-        results = response.json()
-
-    return results
+        try:
+            status, response = get(url, headers=self.headers)
+            if status:
+                self.artifact['data']['hibp']['breaches'] = response.json()
+        except:
+            pass
 
 
-def check_pastes(account):
-    results = None
-    url = 'https://haveibeenpwned.com/api/v2/pasteaccount/%s' % account
-    headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
+    def pastes(self):
+        url = 'https://haveibeenpwned.com/api/v2/pasteaccount/%s' % self.artifact['name']
 
-    try:
-        status, response = get(url, headers=headers)
-    except:
-        return results
-
-    if status:
-        results = response.json()
-
-    return results
+        try:
+            status, response = get(url, headers=self.headers)
+            if status:
+                self.artifact['data']['hibp']['pastes'] = response.json()
+        except:
+            pass
 
 
-def run(account):
-    result = {'breaches': None, 'pastes': None}
-
-    result['breaches'] = check_breaches(account)
-
-    if is_email(account):
-        result['pastes'] = check_pastes(account)
-
-    return result
+    def run(self):
+        self.artifact['data']['hibp'] = {'breaches': None, 'pastes': None}
+        self.breaches()
+        self.pastes()
 
 
-def main(artifact, artifact_type=None):
-    result = run(artifact)
-    return result
+
+def main(artifact):
+    plugin = Plugin(artifact)
+    plugin.run()
+    return plugin.artifact

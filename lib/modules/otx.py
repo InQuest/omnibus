@@ -5,60 +5,65 @@
 ##
 from http import get
 
-
-def ip_run(ip):
-    result = None
-    url = 'https://otx.alienvault.com:443/api/v1/indicators/IPv4/%s/' % ip
-
-    try:
-        status, response = get(url)
-
-        if status:
-            result = response.json()
-    except:
-        pass
-
-    return result
+from common import warning
 
 
-def fqdn_run(ip):
-    result = None
-    url = 'https://otx.alienvault.com:443/api/v1/indicators/domain/%s/' % ip
-
-    try:
-        status, response = get(url)
-
-        if status:
-            result = response.json()
-    except:
-        pass
-
-    return result
+class Plugin(object):
+    def __init__(self, artifact):
+        self.artifact = artifact
+        self.artifact['data']['otx'] = None
+        self.headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
 
 
-def hash_run(ip):
-    result = None
-    url = 'https://otx.alienvault.com:443/api/v1/indicators/file/%s/' % ip
+    def ip(self):
+        url = 'https://otx.alienvault.com:443/api/v1/indicators/IPv4/%s/' % self.artifact['name']
 
-    try:
-        status, response = get(url)
+        try:
+            status, response = get(url)
 
-        if status:
-            result = response.json()
-    except:
-        pass
-
-    return result
+            if status:
+                self.artifact['data']['otx'] = response.json()
+        except:
+            pass
 
 
-def main(artifact, artifact_type=None):
-    if artifact_type == 'hash':
-        result = hash_run(artifact)
-    elif artifact_type == 'ipv4':
-        result = ip_run(artifact)
-    elif artifact_type == 'fqdn':
-        result = fqdn_run(artifact)
-    else:
-        return None
+    def host(self):
+        url = 'https://otx.alienvault.com:443/api/v1/indicators/domain/%s/' % self.artifact['name']
 
-    return result
+        try:
+            status, response = get(url)
+
+            if status:
+                self.artifact['data']['otx'] = response.json()
+        except:
+            pass
+
+
+    def hash(self):
+        url = 'https://otx.alienvault.com:443/api/v1/indicators/file/%s/' % self.artifact['name']
+
+        try:
+            status, response = get(url)
+
+            if status:
+                self.artifact['data']['otx'] = response.json()
+        except:
+            pass
+
+
+    def run(self):
+        if self.artifact['type'] == 'host':
+            if self.artifact['subtype'] == 'ipv4':
+                self.ip()
+            elif self.artifact['subtype'] == 'fqdn':
+                self.host()
+        elif self.artifact['type'] == 'hash':
+            self.hash()
+        else:
+            warning('OTX module accepts artifact types host or hash')
+
+
+def main(artifact):
+    plugin = Plugin(artifact)
+    plugin.run()
+    return plugin.artifact

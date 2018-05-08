@@ -8,36 +8,40 @@ from BeautifulSoup import BeautifulSoup
 from http import get
 
 
-def run(host):
-    result = {}
-
-    headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
-    url = 'http://urlvoid.com/scan/%s/' % host
-    try:
-        status, response = get(url, headers=headers)
-    except:
-        return result
-
-    if status:
-        data = BeautifulSoup(response.text)
-
-        if data.findAll('div', attrs={'class': 'bs-callout bs-callout-info'}):
-            return None
-
-        elif data.findAll('div', attrs={'class': 'bs-callout bs-callout-warning'}):
-            for each in data.findAll('img', alt='Alert'):
-                site = each.parent.parent.td.text.lstrip()
-                url = each.parent.a['href']
-                result[site] = url
-        else:
-            return None
-
-        if len(result) == 0:
-            return None
-
-    return result
+class Plugin(object):
+    def __init__(self, artifact):
+        self.artifact = artifact
+        self.artifact['data']['urlvoid'] = None
+        self.headers = {
+            'Accept-Encoding': 'gzip, deflate',
+            'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'
+        }
 
 
-def main(artifact, artifact_type=None):
-    result = run(artifact)
-    return result
+    def run(self):
+        url = 'http://urlvoid.com/scan/%s/' % self.artifact['name']
+
+        try:
+            status, response = get(url, headers=self.headers)
+
+            if status:
+                data = BeautifulSoup(response.text)
+
+                if data.findAll('div', attrs={'class': 'bs-callout bs-callout-info'}):
+                    pass
+
+                elif data.findAll('div', attrs={'class': 'bs-callout bs-callout-warning'}):
+                    self.artifact['data']['urlvoid'] = {}
+                    for each in data.findAll('img', alt='Alert'):
+                        site = each.parent.parent.td.text.lstrip()
+                        url = each.parent.a['href']
+                        self.artifact['data']['urlvoid'][site] = url
+
+        except:
+            pass
+
+
+def main(artifact):
+    plugin = Plugin(artifact)
+    plugin.run()
+    return plugin.artifact

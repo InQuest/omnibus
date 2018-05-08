@@ -10,52 +10,54 @@ from BeautifulSoup import BeautifulSoup
 from http import get
 
 
-def ip_run(ip):
-    result = None
-    url = 'http://bgp.he.net/ip/%s#_dns' % ip
-    headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
+class Plugin(object):
+    def __init__(self, artifact):
+        self.artifact = artifact
+        self.artifact['data']['he'] = None
 
-    try:
-        status, response = get(url, headers=headers)
 
-        if status:
+    def ip(self):
+        url = 'http://bgp.he.net/ip/%s#_dns' % self.artifact['name']
+        headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
+
+        try:
+            status, response = get(url, headers=headers)
+
+            if status:
+                result = []
+                data = BeautifulSoup(response.text)
+
+                for item in data.findAll(attrs={'id': 'dns', 'class': 'tabdata hidden'}):
+                    result.append(item.text.strip())
+        except:
+            pass
+
+
+    def fqdn(self):
+        url = 'http://bgp.he.net/dns/%s#_whois' % self.artifact['name']
+        headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
+
+        try:
+            status, response = get(url, headers=headers)
+
             result = []
-            data = BeautifulSoup(response.text)
-
-            for item in data.findAll(attrs={'id': 'dns', 'class': 'tabdata hidden'}):
-                result.append(item.text.strip())
-
-    except:
-        pass
-
-    return result
+            if status:
+                pattern = re.compile('\/dns\/.+\".title\=\".+\"\>(.+)<\/a\>', re.IGNORECASE)
+                hosts = re.findall(pattern, response.text)
+                for h in hosts:
+                    result.append(h.strip())
+        except:
+            pass
 
 
-def fqdn_run(host):
-    result = None
-    url = 'http://bgp.he.net/dns/%s#_whois' % host
-    headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
-
-    try:
-        status, response = get(url, headers=headers)
-
-        result = []
-        if status:
-            pattern = re.compile('\/dns\/.+\".title\=\".+\"\>(.+)<\/a\>', re.IGNORECASE)
-            hosts = re.findall(pattern, response.text)
-            for h in hosts:
-                result.append(h.strip())
-
-    except:
-        pass
-
-    return result
+    def run(self):
+        if self.artifact['subtype'] == 'ipv4':
+            self.artifact['data']['he'] = self.ip()
+        elif self.artifact['subtype'] == 'fqdn':
+            self.artifact['data']['he'] = self.fqdn()
 
 
-def main(artifact, artifact_type=None):
-    if artifact_type == 'ipv4':
-        result = ip_run(artifact)
-    elif artifact_type == 'fqdn':
-        result = fqdn_run(artifact)
-
-    return result
+def main(artifact):
+    plugin = Plugin(artifact)
+    plugin.run()
+    return plugin.artifact

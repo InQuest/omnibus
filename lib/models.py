@@ -9,70 +9,62 @@ from common import is_ipv6
 from common import is_fqdn
 from common import is_hash
 
-from common import success
 from common import warning
 
+from common import timestamp
+from common import detect_type
 
-class BitcoinAddress(object):
-    def __init__(self, addr, source=''):
-        self.data = {}
+
+artifact_types = ['host', 'email', 'user', 'bitcoin', 'hash']
+
+
+class Artifact(object):
+    def __init__(self, name, type, source=None, subtype=None, case_id=None):
+        self.name = name
+        self.created = timestamp()
+        self.type = type
+        self.subtype = subtype
         self.source = source
-        self.name = addr
-
-
-class User(object):
-    def __init__(self, username, source=''):
+        self.parent = None
+        self.children = []
+        self.case_id = case_id
+        self.tags = []
+        self.notes = []
         self.data = {}
-        self.source = source
-        self.name = username
+
+        if self.type == 'host':
+            if is_ipv4(self.name):
+                self.subtype = 'ipv4'
+            elif is_ipv6(self.name):
+                self.subtype = 'ipv6'
+            elif is_fqdn(self.name):
+                self.subtype = 'fqdn'
+            else:
+                warning('host type cannot be determined. must be one of: ipv4, ipv6, fqdn')
+                self.subtype = 'unknown'
+
+        elif self.type == 'hash':
+            result = is_hash(self.name)
+            if result is None:
+                warning('hash is not a valid md5, sha1, sha256, or sha512')
+                self.subtype = 'unknown'
+            else:
+                self.subtype = result
 
 
-class Email(object):
-    def __init__(self, email_address, source=''):
-        self.data = {}
-        self.source = source
-        self.name = email_address
+def create_artifact(artifact_name, _type=None, source=None, subtype=None, parent=None):
+    if _type is None:
+        artifact_type = detect_type(artifact_name)
+    else:
+        artifact_type = _type
 
+    if artifact_type not in artifact_types:
+        warning('Artifact must be one of: email, ipv4, fqdn, user, hash, bitcoin address')
+        return None
 
-class Hash(object):
-    def __init__(self, hash, source=''):
-        self.name = hash
-        self.data = {}
-        self.type = None
-        self.source = source
+    created = Artifact(name=artifact_name, type=artifact_type, subtype=subtype, source=source)
 
-        if self.type is None:
-            self._set_type()
+    if parent is not None:
+        created.parent = parent
 
-
-    def _set_type(self):
-        result = is_hash(self.name)
-        if result is None:
-            warning('hash is not a valid md5, sha1, sha256, or sha512')
-        else:
-            self.type = result
-            success('set artifact type: %s' % self.type)
-
-
-class Host(object):
-    def __init__(self, host, source=''):
-        self.name = host
-        self.data = {}
-        self.type = None
-        self.source = source
-
-        if self.type is None:
-            self._set_type()
-
-
-    def _set_type(self):
-        if is_ipv4(self.name):
-            self.type = 'ipv4'
-        elif is_ipv6(self.name):
-            self.type = 'ipv6'
-        elif is_fqdn(self.name):
-            self.type = 'fqdn'
-        else:
-            warning('host type cannot be determined. must be one of: ipv4, ipv6, fqdn')
-            self.type = 'invalid'
-        success('set artifact type: %s' % self.type)
+    return created
