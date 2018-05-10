@@ -61,7 +61,7 @@ Before we begin we'll need to cover some terminology used by Omnibus.
 Starting up Omnibus for investigation is a simple as cloning this GitHub repository, install the Python requirements using `pip install -r requirements.txt` and then running `python2.7 omnibus-cli.py`.
 
 **Omnibus Shell - Main Startup**
-![Alt text](docs/images/omnibus.png?raw=true "Shell")
+![Alt text](docs/images/omnishell.png?raw=true "Shell")
 
 For a visual reference of the CLI, pictured above is the Omnibus console after a new session has been started, 2 artifacts have been added to a session, and the `help` menu is shown.
 
