@@ -38,6 +38,11 @@ The application is written with Python 2.7 in mind and has been successfully tes
 
 As this is a pre-release of the final application, there will very likely be some bugs and uncaught exceptions or other weirdness during usage. Though for the most part, it is fully functional and can be used to begin OSINT investigations right away.
 
+### Contribution
+Omnibus is built in a modular manner that allows the easy addition, or removal, of OSINT plugins. Each module is included in a single directory and by adding a few lines of code, you're module could be the next one!
+
+As this README and the Wiki continues to grow, we will have full-fledged examples of how to write custom plugins and get them in as Pull Requests!
+
 ### Vocabulary
 Before we begin we'll need to cover some terminology used by Omnibus.
 
@@ -55,13 +60,19 @@ Before we begin we'll need to cover some terminology used by Omnibus.
 ### Running Omnibus
 Starting up Omnibus for investigation is a simple as cloning this GitHub repository, install the Python requirements using `pip install -r requirements.txt` and then running `python2.7 omnibus-cli.py`.
 
+**Omnibus Shell - Main Startup**
+![Alt text](docs/images/omnibus.png?raw=true "Shell")
+
+For a visual reference of the CLI, pictured above is the Omnibus console after a new session has been started, 2 artifacts have been added to a session, and the `help` menu is shown.
+
 #### API Keys
-After this, you will need to set any API keys you'd like to use within modules inside the `omnibus/etc/apikeys.json` file. 
-This file is a JSON formatted document and has place-holders for all the services which require API keys and is only accessed on a per module basis to retrieve the exact API key a module needs to execute. 
+You must set any API keys you'd like to use within modules inside the `omnibus/etc/apikeys.json` file. 
+This file is a JSON ocument and has placeholders for all the services which require API keys, and is only accessed by Omnibus on a per module basis to retrieve the exact API key a module needs to execute. 
 
-It should be noted that most of the services requiring API keys have free accounts and API keys. Some may have lower resource limits, but that hasn't been a problem during smaller daily investigations.
+It should be noted that most of the services requiring API keys have free accounts and API keys. Some free accounts may have lower resource limits, but that hasn't been a problem during smaller daily investigations or testing the application.
 
-A handy tip is using the `cat apikeys` command to view which keys you do in fact have stored. If modules are failing, check here first to ensure your API key is properly saved. 
+**A handy tip** is using the `cat apikeys` command to view which keys you do in fact have stored.  
+If modules are failing, check here first to ensure your API key is properly saved. 
 
 ### Interactive Console
 When you first run the CLI, you'll be greeted by a help menu with some basic information. We tried to build the command line script attempts to mimic some common Linux console commands for ease of use. Omnibus provides commandssuch as `cat` to show information about an artifact, `rm` to remove an artifact from the database, `ls` to view currently session artifacts, and so on.
@@ -88,15 +99,14 @@ The high level commands you really need to know to use Omnibus are:
   - clear the current artifact session
 
 Also, if you ever need a quick reference on the different commands available for different areas of the application there are sub-help menus for this exact purpose. Using these commands will show you only those commands available relevant to a specific area:
-* general
+* `general`
   - overall commands such as help, history, quit, set, clear, banner, etc.
-* artifacts
+* `artifacts`
   - display commands specific to artifacts and their management
-* sessions
+* `sessions`
   - display helpful commands around managing sessions
-* modules
+* `modules`
   - show a list of all available modules
-
 
 ### Artifacts
 #### Overview
@@ -131,6 +141,9 @@ Sessions are here for easy access to artifacts and will be cleared each time you
 If you wish to clear the session early, run the command "wipe" and you'll get clean slate.
 
 Eventually, we would like to add a **Cases** portion to Omnibus that allows users to create cases of artifacts, move between them, and maintain a more coherent OSINT management platform. Though for this current pre-release, we will be sticking with the Session :)
+
+**Interacting with Session IDs instead of Artifact names**
+![Alt text](docs/images/artifact_id.png?raw=true "Shell")
 
 
 ### Modules
