@@ -19,7 +19,7 @@ class JSON(object):
         self.file_path = None
 
         if file_name == 'report.json':
-            self.file_name = 'report_%s.json' % timestamp
+            self.file_name = '%s_%s.json' % (data['name'], timestamp)
         else:
             self.file_name = file_name
 
