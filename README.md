@@ -1,5 +1,6 @@
 # OSINT Omnibus
-![GitHub (pre-alpha)](https://img.shields.io/github/release/qubyte/rubidium/all.svg)
+![Release](https://img.shields.io/badge/Release-Alpha-blue.svg)  
+Provided by [InQuest](https://www.inquest.net)
 
 Table of Contents
 =================
@@ -20,6 +21,8 @@ Table of Contents
     * [Monitoring Modules](#monitoring-modules)
 
 # OSINT Omnibus
+![Release](https://img.shields.io/badge/Release-Alpha-blue.svg)
+
 Provided by [InQuest](https://www.inquest.net)
 
 There will be some bugs as this is a very early release of the application (pre-alpha). If you do happen to use notice any modules that fail or other bugs, please create an Issue and/or Pull Request. Both are more than welcome as we'd love to expand this framework as we go on!
