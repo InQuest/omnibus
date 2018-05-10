@@ -1,5 +1,5 @@
 # OSINT Omnibus
-Provided by [InQuest](https://www.inquest.net)
+![GitHub (pre-alpha)](https://img.shields.io/github/release/qubyte/rubidium/all.svg)
 
 Table of Contents
 =================
@@ -16,12 +16,13 @@ Table of Contents
     * [Sessions](#sessions)
     * [Modules](#modules)
     * [Machines](#machines)
-    * [Monitoring Modules](#monitoring-modules)
     * [Reporting](#reporting)
+    * [Monitoring Modules](#monitoring-modules)
 
 # OSINT Omnibus
-**Stage:** Pre-release
-There will be some bugs and this is not the final, or even beta, application.
+Provided by [InQuest](https://www.inquest.net)
+
+There will be some bugs as this is a very early release of the application (pre-alpha). If you do happen to use notice any modules that fail or other bugs, please create an Issue and/or Pull Request. Both are more than welcome as we'd love to expand this framework as we go on!
 
 ## Omnibus
 An Omnibus is defined as `a volume containing several novels or other items previously published separately` and that is exactly what the InQuest Omnibus project intends to be for Open Source Intelligence collection, research, and artifact management.
@@ -40,7 +41,7 @@ Before we begin we'll need to cover some terminology used by Omnibus.
 * Artifact: 
   - An item to investigate
   - Artificats can be created in two ways:
-    - Using the "new" command or by being discoverd through module execution
+    - Using the `new` command or by being discoverd through module execution
 * Session:
   - Cache of artifacts created after starting the Omnibus CLI
   - Each artifact in a session is given an ID to quickly identify and retrieve the artifact from the cache
@@ -52,9 +53,12 @@ Before we begin we'll need to cover some terminology used by Omnibus.
 Starting up Omnibus for investigation is a simple as cloning this GitHub repository, install the Python requirements using `pip install -r requirements.txt` and then running `python2.7 omnibus-cli.py`.
 
 #### API Keys
-After this, you will need to set any API keys you'd like to use within modules inside the `omnibus/etc/apikeys.json` folder. This location is accessed on a per module basis to retrieve the exact API key a module needs to execute. A handy tip is using the `cat apikeys` command to view which keys you do in fact have stored. 
+After this, you will need to set any API keys you'd like to use within modules inside the `omnibus/etc/apikeys.json` file. 
+This file is a JSON formatted document and has place-holders for all the services which require API keys and is only accessed on a per module basis to retrieve the exact API key a module needs to execute. 
 
 It should be noted that most of the services requiring API keys have free accounts and API keys. Some may have lower resource limits, but that hasn't been a problem during smaller daily investigations.
+
+A handy tip is using the `cat apikeys` command to view which keys you do in fact have stored. If modules are failing, check here first to ensure your API key is properly saved. 
 
 ### Interactive Console
 When you first run the CLI, you'll be greeted by a help menu with some basic information. We tried to build the command line script attempts to mimic some common Linux console commands for ease of use. Omnibus provides commandssuch as `cat` to show information about an artifact, `rm` to remove an artifact from the database, `ls` to view currently session artifacts, and so on.
@@ -118,7 +122,7 @@ Artifacts can be removed from the database using the "delete" command. If you no
 
 ### Sessions
 Omnibus makes use of a feature called "sessions". Sessions are temporary caches created via Redis each time you start a CLI session. Every time you create an artifact, that artifacts name is added to the Session along with a numeric key that makes for easy retrieval, searching, and action against the related artifact.
-For example if you're session held one item of "inquest.net", instead of needing to execute `virustotal inquest.net` you could also run `virustotal 1` and you would receive the same results.
+For example if you're session held one item of "inquest.net", instead of needing to execute `virustotal inquest.net` you could also run `virustotal 1` and you would receive the same results. In fact, this works against any module or command that uses an artiface name as it's first argument.
 
 Sessions are here for easy access to artifacts and will be cleared each time you quit the command line session.
 If you wish to clear the session early, run the command "wipe" and you'll get clean slate.
@@ -176,17 +180,7 @@ To perform this, simply run the command `machine <artifact name|session ID>` and
 
 The only caveat is that this may return a large volume of data and child artifacts depending on the artifact type and the results per module. To remedy this, we are investigating a way to remove specific artifact fields from the stored database document to make it easier for users to prune unwanted data.
 
-### Monitoring Modules
-Omnibus will soon be offering the ability to monitor specific keywords and regex patterns across different sources. Once a match is found, an email or text message alert could be sent to the user to inform them on the discovery.
-This could be leveraged for real-time threat tracking, identifying when threat actors appear on new forums or make a fresh Pastebin post, or simply to stay on top of the current news.
-
-Coming monitors include:
-- RSS monitor
-- Pastebin monitor
-- Generic Pastesite monitoring
-- Generic HTTP/JSON monitoring
-
-
+### Quick Reference Guide
 Some quick commands to remember are:
 - `session` - start a new artifact cache
 - `cat <artifact name>|apikeys` - pretty-print an artifacts document or view your stored API keys
@@ -196,4 +190,25 @@ Some quick commands to remember are:
 
 
 ### Reporting
-**To Be Completed**
+Reports are the JSON output of an artifacts database document, essentially a text file version of the output of the "cat" command. But by using the `report` command you may specify an artifact and a filepath you wish to save the output to:
+* `omnibus >> report inquest.net /home/adam/intel/osint/reports/inq_report.json`
+
+This above command overrides the standard report directory of `omnibus/reports`. By default, and if you do not specify a report path, all reports will be saved to that location. Also, if you do not specify a file name the report will use the following format:
+* `[artifact_name]_[timestamp].json`
+
+#### Redirection
+The output of commands can also be saved to arbitrary text files using the standard Linux character `>`.
+For example, if you wish to store the output of a VirusTotal lookup for a host to a file called "vt-lookup.json" you would simply execute:
+* `virustotal inquest.net > vt-lookup.json`
+
+By default the redirected output files are saved in the current working directory, therefore "omnibus/", but if you specify a full path such as `virustotal inquest.net > /home/adam/intel/cases/001/vt-lookup.json` the JSON formatted output will be saved there.
+
+### Monitoring Modules
+Omnibus will soon be offering the ability to monitor specific keywords and regex patterns across different sources. Once a match is found, an email or text message alert could be sent to the user to inform them on the discovery.
+This could be leveraged for real-time threat tracking, identifying when threat actors appear on new forums or make a fresh Pastebin post, or simply to stay on top of the current news.
+
+Coming monitors include:
+- RSS monitor
+- Pastebin monitor
+- Generic Pastesite monitoring
+- Generic HTTP/JSON monitoring
