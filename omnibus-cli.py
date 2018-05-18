@@ -599,7 +599,8 @@ class Console(cmd2.Cmd):
 
     def do_twitter(self, arg):
         """Get Twitter info for username"""
-        pass
+        result = self.dispatch.submit(self.session, 'twitter', arg)
+        pp_json(result)
 
 
     def do_urlvoid(self, arg):
