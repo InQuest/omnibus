@@ -1,4 +1,4 @@
-#!/usr/bin/env pytohn
+#!/usr/bin/env python
 ##
 # The OSINT Omnibus
 # --
