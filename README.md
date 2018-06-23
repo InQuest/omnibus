@@ -1,7 +1,7 @@
 # OSINT Omnibus
 - Developed & maintained by [InQuest](https://www.inquest.net)
 - ![Release](https://img.shields.io/badge/Release-Beta-blue.svg)
-- [![Rawsec's CyberSecurity Inventory](http://list.rawsec.ml/img/badges/Rawsec-inventoried-FF5050_flat_without_logo.svg)](http://list.rawsec.ml/tools.html/#Omnibus)
+- [![Rawsec's CyberSecurity Inventory](http://list.rawsec.ml/img/badges/Rawsec-inventoried-FF5050_flat_without_logo.svg)](http://list.rawsec.ml/tools.html#Omnibus)
 
 
 Table of Contents
@@ -23,8 +23,10 @@ Table of Contents
     * [Monitoring Modules](#monitoring-modules)
 
 # OSINT Omnibus
-- ![Release](https://img.shields.io/badge/Release-Beta-blue.svg)
 - Developed & maintained by [InQuest](https://www.inquest.net)
+- ![Release](https://img.shields.io/badge/Release-Beta-blue.svg)
+- [![Rawsec's CyberSecurity Inventory](http://list.rawsec.ml/img/badges/Rawsec-inventoried-FF5050_flat_without_logo.svg)](http://list.rawsec.ml/tools.html#Omnibus)
+
 
 ## Omnibus
 An Omnibus is defined as `a volume containing several novels or other items previously published separately` and that is exactly what the InQuest Omnibus project intends to be for Open Source Intelligence collection, research, and artifact management.
