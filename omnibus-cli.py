@@ -15,8 +15,10 @@ import json
 import argparse
 
 from lib import common
-from lib import storage
+from lib import exports
+from lib import imports
 from lib import asciiart
+
 
 from lib.mongo import Mongo
 from lib.cache import RedisCache
@@ -356,12 +358,25 @@ class Console(cmd2.Cmd):
         if len(result) == 0:
             warning('No entry found for artifact (%s)' % arg)
         else:
-            report = storage.JSON(data=result, file_path=output_dir)
-            report.save()
+            report = exports.json.Export(artifacts=result, file_path=output_dir)
+            report.send()
             if os.path.exists(report.file_path):
                 success('Saved artifact report (%s)' % report.file_path)
             else:
                 error('Failed to properly save report')
+
+
+    def do_export(self, arg):
+        """Export all database records matching a given search query to SQS, HTTP REST Endpoint, or a JSON file"""
+        try:
+            method, query = arg.split(' --query')
+        except:
+            raise Exception('must provide --query dictionary')
+
+        if arg not in ['json', 'sqs', 'http']:
+            warning('Export argument must be one of: json, sqs, http')
+            warning('HTTP and SQS options are set in the configuration file')
+            return
 
 
     def do_machine(self, arg):
