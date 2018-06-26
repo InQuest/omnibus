@@ -39,6 +39,16 @@ The application is written with Python 2.7 in mind and has been successfully tes
 
 This is a beta of the final application and as such there may be some bugs or other weirdness during usage. For the most part Omnibus is fully functional and can be used to begin OSINT investigation right away.
 
+### Versioning
+Omnibus uses [Semantic Versioning](https://semver.org/). 
+
+Given a version number MAJOR.MINOR.PATCH, increment the:
+- MAJOR version when you make incompatible API changes,
+- MINOR version when you add functionality in a backwards-compatible manner, and
+- PATCH version when you make backwards-compatible bug fixes.
+
+Following this, the first production release will be version 1.0.0.
+
 ### Contribution
 Omnibus is built in a modular manner that allows the easy addition of OSINT data source modules and import/export modules. Each module per category is included in a single directory, and by adding a few lines of code, your module could be the next!
 
