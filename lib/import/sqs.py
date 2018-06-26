@@ -18,7 +18,7 @@ class Import(object):
         self.results = []
 
 
-    def send(self):
+    def receive(self):
         """ Convert list of artifact names and other metadata into objects and return to application """
         pass
 

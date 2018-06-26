@@ -17,7 +17,7 @@ class Import(object):
         self.artifacts = []
 
 
-    def send(self):
+    def receive(self):
         """ convert list of artifact names into objects and return to application """
         try:
             for item in self.data:
