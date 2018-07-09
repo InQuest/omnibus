@@ -1,4 +1,4 @@
-#!/usr/bin/env pytohn
+#!/usr/bin/env python
 ##
 # omnibus - deadbits
 # module execution for CLI application
