@@ -1,0 +1,326 @@
+{
+  // Example schema showing the artifact deadbits.org and the results of the nmap and dnsresolve module
+  // All other modules are also contained under the data' key and follow roughly the same format.
+  // Didn't include every module in this schema example or else it'd be rather huge
+  
+  "$id": "https://github.com/InQuest/omnibus/blob/master/docs/schema.json",
+
+  "required": [
+    "name",
+    "created",
+    "type",
+    "subtype",
+    "parent",
+    "source",
+    "tags",
+    "children",
+    "data"
+  ],
+
+  "type": "object",
+  "properties": {
+    "name": {
+      "$id": "/properties/name",
+      "type": "string",
+      "description": "Root identifier of user or module created artifact",
+      "examples": [
+        "deadbits.org"
+      ]
+    },
+    "created": {
+      "$id": "/properties/created",
+      "type": "string",
+      "description": "UTC timestamp when artifact was created",
+      "examples": [
+        "2018-04-25T18:23:17.170484"
+      ]
+    },
+    "type": {
+      "$id": "/properties/type",
+      "type": "string",
+      "description": "High-level description of artifact",
+      "examples": [
+        "host",
+        "email",
+        "hash",
+        "user",
+        "btc"
+      ]
+    },
+    "subtype": {
+      "$id": "/properties/subtype",
+      "type": "string",
+      "description": "Lower level description of artifact",
+      "examples": [
+        "fqdn",
+        "ipv4",
+        "md5",
+        "sha1",
+        "sha256",
+        "sha512"
+      ]
+    },
+    "parent": {
+      "$id": "/properties/parent",
+      "type": "null",
+      "description": "If root artifact is a child, parent holds the artifact identifier/name that created the child artifact",
+      "default": null,
+      "examples": [
+        "www.deadbits.org"
+      ]
+    },
+    "source": {
+      "$id": "/properties/source",
+      "type": "null",
+      "description": "User or module defined reference for artifacts origin",
+      "default": null,
+      "examples": [
+        "internal research",
+        "dnsresolve",
+        "nmap"
+      ]
+    },
+    "tags": {
+      "$id": "/properties/tags",
+      "type": "array",
+      "description": "List of user defined tags describing an artifact",
+      "default": null,
+      "examples": [
+        "cybercrime",
+        "phishing",
+        "legitimate-site"
+      ]
+    },
+    "children": {
+      "$id": "/properties/children",
+      "type": "array",
+      "description": "List of objects defining Artifacts discovered by modules",
+      "default": null,
+      "items": {
+        "$id": "/properties/children/items",
+        "type": "object",
+        "properties": {
+          "type": {
+            "$id": "/properties/children/items/properties/type",
+            "type": "string",
+            "description": "High-level description of child artifact",
+            "default": "",
+            "examples": [
+              "host"
+            ]
+          },
+          "subtype": {
+            "$id": "/properties/children/items/properties/subtype",
+            "type": "string",
+            "description": "Lower-level description of artifact",
+            "default": "",
+            "examples": [
+              "fqdn",
+              "ipv4",
+              "md5",
+              "sha1",
+              "sha256",
+              "sha512"
+            ]
+          },
+          "name": {
+            "$id": "/properties/children/items/properties/name",
+            "type": "string",
+            "description": "Root identifier of user or module created artifact",
+            "default": "",
+            "examples": [
+              "138.197.16.202"
+            ]
+          },
+          "source": {
+            "$id": "/properties/children/items/properties/source",
+            "type": "string",
+            "description": "Name of module that created child artifact",
+            "default": [],
+            "examples": [
+              "nmap",
+              "dnsresolve"
+            ]
+          }
+        }
+      }
+    },
+    "data": {
+      "$id": "/properties/data",
+      "type": "object",
+      "description": "Nested objects holding results of module executions",
+      "default": null,
+      "properties": {
+        "nmap": {
+          "$id": "/properties/data/properties/nmap",
+          "type": "object",
+          "properties": {
+            "services": {
+              "$id": "/properties/data/properties/nmap/properties/services",
+              "type": "array",
+              "items": {
+                "$id": "/properties/data/properties/nmap/properties/services/items",
+                "type": "object",
+                "properties": {
+                  "banner": {
+                    "$id": "/properties/data/properties/nmap/properties/services/items/properties/banner",
+                    "type": "string",
+                    "description": "Nmap discovered service banner",
+                    "default": "",
+                    "examples": [
+                      "product: nginx"
+                    ]
+                  },
+                  "protocol": {
+                    "$id": "/properties/data/properties/nmap/properties/services/items/properties/protocol",
+                    "type": "string",
+                    "description": "Nmap discovered protocol",
+                    "default": "",
+                    "examples": [
+                      "tcp"
+                    ]
+                  },
+                  "port": {
+                    "$id": "/properties/data/properties/nmap/properties/services/items/properties/port",
+                    "type": "integer",
+                    "description": "Nmap discovered port",
+                    "default": 0,
+                    "examples": [
+                      80
+                    ]
+                  },
+                  "service": {
+                    "$id": "/properties/data/properties/nmap/properties/services/items/properties/service",
+                    "type": "string",
+                    "description": "List of Nmap discovered services",
+                    "default": "",
+                    "examples": [
+                      "http"
+                    ]
+                  }
+                }
+              }
+            },
+            "ports": {
+              "$id": "/properties/data/properties/nmap/properties/ports",
+              "type": "array",
+              "items": {
+                "$id": "/properties/data/properties/nmap/properties/ports/items",
+                "type": "array",
+                "items": {
+                  "$id": "/properties/data/properties/nmap/properties/ports/items/items",
+                  "type": "integer",
+                  "description": "List of Nmap discovered ports mapped to their protocols",
+                  "default": 0,
+                  "examples": [
+                    80,
+                    "tcp"
+                  ]
+                }
+              }
+            },
+            "ipv4": {
+              "$id": "/properties/data/properties/nmap/properties/ipv4",
+              "type": "string",
+              "description": "Nmap resolved IP address IP of scanned host",
+              "default": "",
+              "examples": [
+                "138.197.16.202"
+              ]
+            }
+          }
+        },
+        "dnsresolve": {
+          "$id": "/properties/data/properties/dnsresolve",
+          "type": "object",
+          "properties": {
+            "A": {
+              "$id": "/properties/data/properties/dnsresolve/properties/A",
+              "type": "array",
+              "items": {
+                "$id": "/properties/data/properties/dnsresolve/properties/A/items",
+                "type": "string",
+                "description": "DNS A Record",
+                "default": "",
+                "examples": [
+                  "138.197.16.202"
+                ]
+              }
+            },
+            "TXT": {
+              "$id": "/properties/data/properties/dnsresolve/properties/TXT",
+              "type": "array",
+              "items": {
+                "$id": "/properties/data/properties/dnsresolve/properties/TXT/items",
+                "type": "null",
+                "description": "DNS TXT record",
+                "default": null,
+                "examples": [
+                  null
+                ]
+              }
+            },
+            "AAAA": {
+              "$id": "/properties/data/properties/dnsresolve/properties/AAAA",
+              "type": "array",
+              "items": {
+                "$id": "/properties/data/properties/dnsresolve/properties/AAAA/items",
+                "type": "null",
+                "description": "DNS AAAA record",
+                "default": null,
+                "examples": [
+                  null
+                ]
+              }
+            },
+            "CNAME": {
+              "$id": "/properties/data/properties/dnsresolve/properties/CNAME",
+              "type": "array",
+              "items": {
+                "$id": "/properties/data/properties/dnsresolve/properties/CNAME/items",
+                "type": "null",
+                "description": "DNS CNAME record",
+                "default": null,
+                "examples": [
+                  null
+                ]
+              }
+            },
+            "NS": {
+              "$id": "/properties/data/properties/dnsresolve/properties/NS",
+              "type": "array",
+              "items": {
+                "$id": "/properties/data/properties/dnsresolve/properties/NS/items",
+                "type": "string",
+                "description": "DNS name server records",
+                "default": "",
+                "examples": [
+                  "ns3.digitalocean.com.",
+                  "ns2.digitalocean.com.",
+                  "ns1.digitalocean.com."
+                ]
+              }
+            },
+            "MX": {
+              "$id": "/properties/data/properties/dnsresolve/properties/MX",
+              "type": "array",
+              "items": {
+                "$id": "/properties/data/properties/dnsresolve/properties/MX/items",
+                "type": "string",
+                "description": "DNS mail server records",
+                "default": "",
+                "examples": [
+                  "1 aspmx.l.google.com",
+                  "5 alt1.aspmx.l.google.com",
+                  "5 alt2.aspmx.l.google.com",
+                  "10 aspmx2.googlemail.com",
+                  "10 aspmx3.googlemail.com"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
