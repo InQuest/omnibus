@@ -5,6 +5,7 @@
 
 OSINT Omnibus
 ===================================
+
 Omnibus is an easy to user interactive command line applications for users to perform OSINT investigation of artifacts such as IP addresses, domains, email addresses, user names, file hashes, and Bitcoin addresses.
 
 An Omnibus is defined as a volume containing several novels or other items previously published separately and that is exactly what the InQuest Omnibus project intends to be for Open Source Intelligence collection, research, and artifact management.
@@ -15,18 +16,17 @@ User Guide
 ----------
 
 - Getting Started
-    .. toctree::
+
+ .. toctree::
     :maxdepth: 2
     
     installation
     databases
     apikeys
-
-.. toctree::
-    :maxdepth: 2
     vocabulary
 
-- Interactive Console
+- Using Omnibus
+
  .. toctree::
     :maxdepth: 2
 
@@ -39,6 +39,7 @@ User Guide
     redirection
 
 - Quick Reference
+
  .. toctree::
     :maxdepth: 2
 
