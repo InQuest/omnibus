@@ -1,7 +1,13 @@
-.. _apikeys:
+.. _installation:
 
-API Keys
+Installation
 ==========
-All of your API keys for third party service modules must be stored within etc/apikeys.json. For each named service simply paste your API key as the quoted value within the JSON file.
+Omnibus is written for Python 2.7 and has been tested on OS X 10.13.6, Ubuntu 16.04, and Ubuntu 18.04.
 
-All services used are free to receive an API key, but if you don't enter one for a given service and attempt to run its module it will simply return no results.
+To get started, first clone the GitHub repository::
+    git clone https://github.com/InQuest/omnibus
+
+Move into the new directory and install the required Python libraries::
+    cd omnibus
+    pip install -r requirements.txt
+

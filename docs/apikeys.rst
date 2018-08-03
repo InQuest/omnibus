@@ -1,4 +1,4 @@
-.. _apikeys:
+.. _api_keys:
 
 API Keys
 ==========
