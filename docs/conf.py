@@ -153,3 +153,39 @@ texinfo_documents = [
      author, 'Omnibus', 'One line description of project.',
      'Miscellaneous'),
 ]
+
+html_theme_options = {
+    'fixed_sidebar': 'true',
+    'font_family': '"Proxima Nova", "Helvetica Neue", Helvetica, Arial, sans-serif',
+    'head_font_family': '"Proxima Nova", "Helvetica Neue", Helvetica, Arial, sans-serif',
+    'logo_name': 'true',
+    'description': 'OSINT artifact investigation',
+    'github_user': 'InQuest',
+    'github_repo': 'https://github.com/InQuest/omnibus',
+    'github_type': 'star',
+    'show_powered_by': 'false',
+    'page_width': 'auto',
+    'sidebar_width': '320px',
+    'gray_1': '#23272d',
+    'gray_2': '#f7f9fc',
+    'gray_3': '#fefeff',
+    'pink_1': '#ff796e',
+    'pink_2': '#e12a26',
+    'body_text': '#1f292f',
+    'footer_text': '#919396',
+    'link': '#e03f26',
+    'link_hover': '#e03f26',
+    'sidebar_search_button': '#ccc',
+    'narrow_sidebar_bg': '#f0f2f5',
+    'narrow_sidebar_link': '#1f292f'
+}
+
+html_sidebars = {
+     '**': [
+         'about.html',
+         'localtoc.html',
+         'relations.html',
+         'links.html',
+         'searchbox.html',
+     ]
+ }
