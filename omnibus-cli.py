@@ -50,10 +50,10 @@ help_dict = {
     ],
     'modules': [
         'blockchain', 'clearbit', 'censys', 'csirtg', 'cymon',
-        'dnsbrute', 'dnsresolve', 'geoip', 'fullcontact', 'gist', 'gitlab', 'github', 'hackedemails', 'he', 'hibp',
-        'hunter', 'ipinfo', 'ipvoid', 'isc', 'keybase', 'machine', 'nmap', 'passivetotal', 'pastebin', 'phishtank',
-        'projecthp', 'pgp', 'reddit', 'rss', 'shodan', 'ssl', 'securitynews', 'threatcrowd',
-        'threatexpert', 'totalhash', 'twitter', 'urlvoid', 'usersearch', 'virustotal', 'web', 'whois'],
+        'dnsresolve', 'geoip', 'fullcontact', 'hackedemails', 'he', 'hibp',
+        'ipinfo', 'ipvoid', 'isc', 'keybase', 'machine', 'nmap', 'passivetotal',
+        'pgp', 'rss', 'shodan', 'securitynews', 'threatcrowd',
+        'threatexpert', 'twitter', 'urlvoid', 'virustotal', 'web', 'whois'],
     'sessions': [
         'session', 'ls', 'rm', 'wipe'
     ]
@@ -402,9 +402,9 @@ class Console(cmd2.Cmd):
         pp_json(result)
 
 
-    def do_dnsbrute(self, arg):
-        """Enumerate DNS subdomains of FQDN """
-        pass
+    # def do_dnsbrute(self, arg):
+    #     """Enumerate DNS subdomains of FQDN """
+    #     pass
 
 
     def do_dnsresolve(self, arg):
@@ -425,14 +425,14 @@ class Console(cmd2.Cmd):
         pp_json(result)
 
 
-    def do_gist(self, arg):
-        """Search Github Gist's for artifact as string """
-        pass
+    # def do_gist(self, arg):
+    #     """Search Github Gist's for artifact as string """
+    #     pass
 
 
-    def do_gitlab(self, arg):
-        """Check Gitlab for active username """
-        pass
+    # def do_gitlab(self, arg):
+    #     """Check Gitlab for active username """
+    #     pass
 
 
     def do_github(self, arg):
@@ -522,14 +522,14 @@ class Console(cmd2.Cmd):
         pp_json(result)
 
 
-    def do_projecthp(self, arg):
-        """Search Project Honeypot for host"""
-        pass
+    # def do_projecthp(self, arg):
+    #     """Search Project Honeypot for host"""
+    #    pass
 
 
-    def do_reddit(self, arg):
-        """Search Reddit for active username"""
-        pass
+    # def do_reddit(self, arg):
+    #     """Search Reddit for active username"""
+    #     pass
 
 
     def do_rss(self, arg):
@@ -592,9 +592,9 @@ class Console(cmd2.Cmd):
         pp_json(result)
 
 
-    def do_totalhash(self, arg):
-        """Search TotalHash for host"""
-        pass
+    # def do_totalhash(self, arg):
+    #     """Search TotalHash for host"""
+    #     pass
 
 
     def do_twitter(self, arg):
@@ -609,9 +609,9 @@ class Console(cmd2.Cmd):
         pp_json(result)
 
 
-    def do_usersearch(self, arg):
-        """Search Usersearch.com for active usernames"""
-        pass
+    # def do_usersearch(self, arg):
+    #     """Search Usersearch.com for active usernames"""
+    #     pass
 
 
     def do_virustotal(self, arg):

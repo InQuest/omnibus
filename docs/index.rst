@@ -15,17 +15,15 @@ The project requires both MongoDB and Redis running in order to store artifact d
 User Guide
 ----------
 
-- Getting Started
-
  .. toctree::
     :maxdepth: 2
     
     installation
-    databases
     apikeys
     vocabulary
 
-- Using Omnibus
+Usage & Workflows
+-----------------
 
  .. toctree::
     :maxdepth: 2
@@ -33,17 +31,18 @@ User Guide
     interactivecli
     artifacts
     sessions
+
+Investigations & Other Uses
+--------------------------------
+
+ .. toctree::
+    :maxdepth: 2
+
     modules
     machines
     reporting
     redirection
 
-- Quick Reference
-
- .. toctree::
-    :maxdepth: 2
-
-    quickref
 
 Indices and tables
 ==================

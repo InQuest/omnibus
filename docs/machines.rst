@@ -1,8 +1,9 @@
 .. _machines:
 
 Machines
-==========
-Machines are used to run every available module for an artifact type against a user specified artifact. This is designed to make it simple to collect all available data on an artifact with one command.
+========
+Machines are a simple way to run all available modules for an artifact type against a given artifact. This is a fast way if you want to gather as much information on a target as possible using a single command.
 
-Usage
------
+To perform this, simply run the command ``machine <artifact name|session ID>`` and wait a few minutes until the modules are finished executing.
+
+The only caveat is that this may return a large volume of data and child artifacts depending on the artifact type and the results per module. To remedy this, we are investigating a way to remove specific artifact fields from the stored database document to make it easier for users to prune unwanted data.
