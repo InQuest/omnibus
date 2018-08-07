@@ -22,7 +22,7 @@ class Plugin(object):
         url = 'https://api.passivetotal.org/v2/dns/passive/unique?query=%s' % self.artifact['name']
 
         user = self.api_key['user']
-        token = self.api_keykey['key']
+        token = self.api_key['key']
 
         try:
             status, response = get(url, auth=HTTPBasicAuth(user, token))

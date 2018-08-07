@@ -7,6 +7,7 @@
 from http import get
 
 from common import get_apikey
+from common import warning
 
 
 class Plugin(object):
@@ -25,8 +26,8 @@ class Plugin(object):
 
             if status:
                 self.artifact['data']['censys'] = response.json()
-        except:
-            pass
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
 def main(artifact):

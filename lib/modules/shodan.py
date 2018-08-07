@@ -49,4 +49,4 @@ class Plugin(object):
 def main(artifact):
     plugin = Plugin(artifact)
     plugin.run()
-    return plugin.results
+    return plugin.artifact

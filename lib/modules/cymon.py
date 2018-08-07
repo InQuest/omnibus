@@ -6,6 +6,7 @@
 import cymon
 
 from common import get_apikey
+from common import warning
 
 
 class Plugin(object):
@@ -20,15 +21,15 @@ class Plugin(object):
     def ip(self):
         try:
             self.artifact['data']['cymon'] = self.api.ip_lookup(self.artifact['name'])
-        except:
-            pass
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
     def fqdn(self):
         try:
             self.artifact['data']['cymon'] = self.api.domain_lookup(self.artifact['name'])
-        except:
-            pass
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
     def run(self):

@@ -6,6 +6,7 @@
 
 import dns.resolver
 
+from common import warning
 from common import detect_type
 
 
@@ -23,7 +24,8 @@ class Plugin(object):
             for item in res:
                 if item not in results:
                     results.append(str(item))
-        except:
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
             results.append(None)
 
         return results

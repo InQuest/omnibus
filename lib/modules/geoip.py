@@ -6,6 +6,7 @@
 from http import get
 
 from common import get_apikey
+from common import warning
 
 
 class Plugin(object):
@@ -36,8 +37,8 @@ class Plugin(object):
                             'subtype': 'fqdn',
                             'source': 'ipstack'
                         })
-        except:
-            pass
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
 def main(artifact):

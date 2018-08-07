@@ -5,6 +5,8 @@
 ##
 from http import get
 
+from common import warning
+
 
 class Plugin(object):
     def __init__(self, artifact):
@@ -21,8 +23,8 @@ class Plugin(object):
             if status:
                 results = response.json()
                 self.artifact['data']['hackedemails'] = results
-        except:
-            pass
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
 def main(artifact):
