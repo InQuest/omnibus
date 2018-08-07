@@ -3,6 +3,7 @@ import os
 import re
 import sys
 import json
+import string
 import datetime
 import ConfigParser
 
@@ -284,7 +285,8 @@ def detect_type(artifact):
         return 'btc'
     else:
         try:
-            if artifact.isalnum():
+            accepted = set(string.ascii_letters + string.digits + '_')
+            if set(artifact) <= accepted:
                 return 'user'
         except:
             return None
