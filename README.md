@@ -3,14 +3,8 @@
 - ![Release](https://img.shields.io/badge/Release-Beta-blue.svg)
 - [![Rawsec's CyberSecurity Inventory](http://list.rawsec.ml/img/badges/Rawsec-inventoried-FF5050_flat_without_logo.svg)](http://list.rawsec.ml/tools.html#Omnibus)
 
-Notice
-======
-We are hard at work preparing for the official release of Version 1.1.0 ! This will be announced on https://blog.inquest.net within this week. The blog will cover the high level concepts behind Omnibus, some sample use cases, and also link to our in-depth ReadTheDocs documentation covering everything from installation, adding your API keys, interacting with artifacts, creating and managing sessions, running modules, and much more.
 
-Please hang tight will we go through this transitionary period :)
-
-
-(Pre-Release) Table of Contents
+Table of Contents
 ===============================
 
 * [OSINT Omnibus](#osint-omnibus)
@@ -44,16 +38,6 @@ This project has taken motivation from the greats that came before it such as Sp
 The application is written with Python 2.7 in mind and has been successfully tested on OSX and Ubuntu 16.04 environments.
 
 This is a beta of the final application and as such there may be some bugs or other weirdness during usage. For the most part Omnibus is fully functional and can be used to begin OSINT investigation right away.
-
-### Versioning
-Omnibus uses [Semantic Versioning](https://semver.org/). 
-
-Given a version number MAJOR.MINOR.PATCH, increment the:
-- MAJOR version when you make incompatible API changes,
-- MINOR version when you add functionality in a backwards-compatible manner, and
-- PATCH version when you make backwards-compatible bug fixes.
-
-Following this, the first production release will be version 1.0.0.
 
 ### Contribution
 Omnibus is built in a modular manner that allows the easy addition of OSINT data source modules and import/export modules. Each module per category is included in a single directory, and by adding a few lines of code, your module could be the next!
@@ -181,33 +165,32 @@ Also, within the Omnibus console, typing the module name will show you the Help 
 * Blockchain.info
 * Censys
 * ClearBit
+* CSIRTG
 * Cymon
-* DNS subdomain enumeration
 * DNS resolution
 * DShield (SANS ISC)
-* GeoIP lookup
 * Full Contact
-* GitHub user search
-* HackedEmails.com email search
-* Hurricane Electric host search
-* HIBP search
+* Geolocation
+* GitHub username search
+* HackedEmails.com
+* HaveIBeenPwned.com
+* Hurricane Electric
 * IPInfo
 * IPVoid
-* KeyBase
-* Nmap
+* Keybase username lookup
+* NMap scanner
+* OTX (AlienVault)
 * PassiveTotal
-* Pastebin
-* PGP Email and Name lookup
-* RSS Feed Reader
+* PGP Key Search
+* RSS reader 
 * Shodan
-* Security News Reader
 * ThreatCrowd
 * ThreatExpert
-* TotalHash
 * Twitter
 * URLVoid
 * VirusTotal
 * WHOIS
+* WhoisMind
 
 ### Machines
 Machines are a simple way to run all available modules for an artifact type against a given artifact. This is a fast way if you want to gather as much information on a target as possible using a single command.
