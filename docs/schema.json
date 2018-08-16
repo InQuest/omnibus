@@ -14,7 +14,6 @@
   "type": "object",
   "properties": {
     "name": {
-      "$id": "/properties/name",
       "type": "string",
       "description": "Root identifier of user or module created artifact",
       "examples": [
