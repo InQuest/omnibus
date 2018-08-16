@@ -52,7 +52,7 @@ help_dict = {
         'blockchain', 'clearbit', 'censys', 'csirtg', 'cymon',
         'dnsresolve', 'geoip', 'fullcontact', 'hackedemails', 'he', 'hibp',
         'ipinfo', 'ipvoid', 'isc', 'keybase', 'machine', 'nmap', 'passivetotal',
-        'pgp', 'rss', 'shodan', 'securitynews', 'threatcrowd',
+        'pgp', 'rss', 'shodan', 'threatcrowd',
         'threatexpert', 'twitter', 'urlvoid', 'virustotal', 'web', 'whois'],
     'sessions': [
         'session', 'ls', 'rm', 'wipe'
@@ -373,9 +373,15 @@ class Console(cmd2.Cmd):
         pp_json(result)
 
 
-    def do_abusech(self, arg):
-        """Search Abuse.ch for artifact details """
-        pass
+    # def do_abusech(self, arg):
+    #    """Search Abuse.ch for artifact details """
+    #    pass
+
+
+    def do_blockchain(self, arg):
+        """Search Blockchain.info for BTC address"""
+        result = self.dispatch.submit(self.session, 'blockchain', arg)
+        pp_json(result)
 
 
     def do_clearbit(self, arg):
@@ -540,10 +546,10 @@ class Console(cmd2.Cmd):
         pp_json(result)
 
 
-    def do_securitynews(self, arg):
-        """Get current cybersecurity headlines from Google News"""
-        result = self.dispatch.submit(self.session, 'securitynews', arg, True)
-        pp_json(result)
+    # def do_securitynews(self, arg):
+    #    """Get current cybersecurity headlines from Google News"""
+    #    result = self.dispatch.submit(self.session, 'securitynews', arg, True)
+    #    pp_json(result)
 
 
     def do_shodan(self, arg):
