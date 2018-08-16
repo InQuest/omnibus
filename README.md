@@ -9,6 +9,7 @@ Table of Contents
 
 * [OSINT Omnibus](#osint-omnibus)
   * [Omnibus](#omnibus)
+    * [Documentation](#documentation)
     * [Vocabulary](#vocabulary)
     * [Running Omnibus](#running-omnibus)
       * [API Keys](#api-keys)
@@ -45,6 +46,9 @@ Omnibus is built in a modular manner that allows the easy addition of OSINT data
 As the Wiki continues to grow, we will have full examples of how to write custom plugins.
 
 If you happen to notice any bugs or other issues, please create an Issue and/or Pull Request. We would also love for community support in creating more modules and expanding the Omnibus use-cases. Forks and Pull Requests for new features are more than welcome!
+
+### Documentation
+This README file serves as a quick overview of Omnibus and its features. Full documentation is available in the 'docs' folder of this repository.
 
 ### Vocabulary
 Before we begin we'll need to cover some terminology used by Omnibus.
