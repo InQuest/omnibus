@@ -53,7 +53,7 @@ help_dict = {
         'dnsresolve', 'geoip', 'fullcontact', 'hackedemails', 'he', 'hibp',
         'ipinfo', 'ipvoid', 'isc', 'keybase', 'machine', 'nmap', 'passivetotal',
         'pgp', 'rss', 'shodan', 'threatcrowd',
-        'threatexpert', 'twitter', 'urlvoid', 'virustotal', 'web', 'whois'],
+        'twitter', 'urlvoid', 'virustotal', 'web', 'whois'],
     'sessions': [
         'session', 'ls', 'rm', 'wipe'
     ]
@@ -589,12 +589,6 @@ class Console(cmd2.Cmd):
     def do_threatcrowd(self, arg):
         """Search ThreatCrowd for host"""
         result = self.dispatch.submit(self.session, 'threatcrowd', arg)
-        pp_json(result)
-
-
-    def do_threatexpert(self, arg):
-        """Search ThreatExpert for host"""
-        result = self.dispatch.submit(self.session, 'threatexpert', arg)
         pp_json(result)
 
 
