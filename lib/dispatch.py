@@ -10,7 +10,7 @@ from common import error
 from common import success
 from common import warning
 
-from common import get_session_key
+from common import lookup_key
 from common import detect_type
 
 from models import create_artifact
@@ -47,7 +47,7 @@ class Dispatch(object):
 
     def machine(self, session, artifact):
         """ Run all modules against an artifact of a given type """
-        is_key, value = get_session_key(session, artifact)
+        is_key, value = lookup_key(session, artifact)
 
         if is_key and value is None:
             error('Unable to find artifact key in session (%s)' % artifact)
@@ -104,7 +104,7 @@ class Dispatch(object):
             module_result = self.run(module, None)
             return module_result
 
-        is_key, value = get_session_key(session, artifact)
+        is_key, value = lookup_key(session, artifact)
 
         if is_key and value is None:
             error('Unable to find artifact key in session (%s)' % artifact)

@@ -173,7 +173,7 @@ def mkdir(path):
             return False
 
 
-def get_session_key(session, artifact):
+def lookup_key(session, artifact):
     """ Attempt to see if artifact has a valid session key and return if True """
     value = None
     valid_key = False
