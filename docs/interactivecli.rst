@@ -5,11 +5,12 @@ Interactive CLI
 
 Overview
 --------
-Omnibus is controlled through the interactive command line script `omnibus-cli.py`. 
+Omnibus is controlled through the interactive command line script ``omnibus-cli.py``. 
+When you first run the CLI, you'll be greeted by a help menu with some basic information. 
 
-When you first run the CLI, you'll be greeted by a help menu with some basic information. Omnibus tries to use commands that mimic some common Linux commands for familiarity and ease of use. For example, the command ``cat`` to show information about an artifact, ``rm`` to remove an artifact from the database, ``ls`` for view current session artifacts, and output redirection support for any command using the `>` operator.
+Omnibus tries to use commands that mimic some common Linux commands for familiarity and ease of use. For example, the command ``cat`` to show information about an artifact, ``rm`` to remove an artifact from the database, ``ls`` for view current session artifacts, and output redirection support for any command using the `>` operator.
 
-An example screenshot below shows starting the application with the ``debug`` argument, which I highly recommend in order to get full Python tracebacks on any potential exceptions or crashes, and the basics of viewing commands, creating a session, and adding new artifacts for investigation:
+An example screenshot below shows starting the application with the ``--debug`` argument, which I highly recommend in order to get full Python tracebacks on any potential exceptions or crashes, and the basics of viewing commands, creating a session, and adding new artifacts for investigation:
 
 .. image:: images/omnibus-shell.png
 
@@ -45,6 +46,8 @@ Quick Reference
 ---------------
 If you ever need a quick reference on the different commands available for different areas of the application there are sub-help menus for this exact purpose. Using these commands will show you only those commands available relevant to a specific area:
 
+**General Help**
+
 * ``general``
     * overall commands such as help, history, quit, set, clear, banner, etc.
 * ``artifacts``
@@ -53,6 +56,46 @@ If you ever need a quick reference on the different commands available for diffe
     * display helpful commands around managing sessions
 * ``modules``
     * show a list of all available modules
+
+**Artifact Help**
+
+* ``new <artifact name>
+    * create new artifact, add it to MongoDB and any running session
+
+* ``open <file-name>``
+    * load text file list of items into Omnibus as Artifacts
+
+* ``source``
+    * add arbitrary source to the most recently created artifact
+
+* ``source add <artifact name | session id>``
+    * add arbitrary source to an artifact of your choosing
+
+* ``source view <artifact name | session id>``
+    * view defined source to an artifact of your choosing
+
+* ``ls``
+    * show all artifacts in current session
+
+* ``rm``
+    * remove artifact from current session & database
+
+* ``wipe`
+    * remove all artifacts from current session
+
+**Misc. Help**
+* ``cat <artifact name | session id>``
+    * pretty-print stored artifact data
+
+* ``cat apikeys``
+    * show list of all your stored API keys
+
+**Reporting Help**
+* ``report <artifact name | session id>``
+    * pretty-print stored artifact data
+
+* ``$cmd > $file-path.json``
+    * The ``>`` operator redirects the output of any command to a local file. This is meant to be used for saving reports but can also be used on individual modules and commands
 
 
 Return to Homepage

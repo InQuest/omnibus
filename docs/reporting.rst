@@ -2,6 +2,7 @@
 
 Reporting
 ==========
+
 Reports are the JSON output of an artifacts database document, essentially a text file version of the output of the ``cat`` command. But by using the report command you may specify an artifact and a filepath you wish to save the output to:
 
 ``report inquest.net /home/adam/intel/osint/reports/inq_report.json``
