@@ -31,7 +31,6 @@ class Plugin(object):
                 results = response.json()
                 self.artifact['data']['geoip'] = results
 
-
                 if 'hostname' in results.keys():
                     if results['hostname'] != self.artifact['name'] and results['hostname'] != '':
                         self.artifact.children.append({
