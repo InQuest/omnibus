@@ -14,8 +14,9 @@ class Plugin(object):
         self.artifact = artifact
         self.artifact['data']['cymon'] = None
         self.api_key = get_apikey('cymon')
+        if self.api_key == '':
+            raise TypeError('API keys cannot be left blank | set all keys in etc/apikeys.json')
         self.api = cymon.Cymon(self.api_key)
-
 
 
     def ip(self):

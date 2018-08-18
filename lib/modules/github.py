@@ -28,7 +28,7 @@ class Plugin(object):
                         self.artifact['children'].append({
                             'name': self.artifact.data['github']['email'],
                             'type': 'email',
-                            'subtype': None,
+                            'subtype': 'account',
                             'source': 'github'
                         })
         except Exception as err:

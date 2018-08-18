@@ -10,7 +10,8 @@ class Plugin(object):
         self.artifact = artifact
         self.artifact['data']['csirtg'] = None
         self.api_key = get_apikey('csirtg')
-
+        if self.api_key == '':
+            raise TypeError('API keys cannot be left blank | set all keys in etc/apikeys.json')
 
     def run(self):
         try:

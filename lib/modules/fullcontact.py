@@ -14,6 +14,8 @@ class Plugin(object):
         self.artifact = artifact
         self.artifact['data']['fullcontact'] = None
         self.api_key = get_apikey('fullcontact')
+        if self.api_key == '':
+            raise TypeError('API keys cannot be left blank | set all keys in etc/apikeys.json')
         self.headers = {
             'X-FullContact-APIKey': self.api_key,
             'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'

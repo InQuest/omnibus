@@ -7,6 +7,7 @@ from requests.auth import HTTPBasicAuth
 
 from http import get
 
+from common import warning
 from common import get_apikey
 
 
@@ -15,6 +16,8 @@ class Plugin(object):
         self.artifact = artifact
         self.artifact['data']['passivetotal'] = None
         self.api_key = get_apikey('passivetotal')
+        if self.api_key == '':
+            raise TypeError('API keys cannot be left blank | set all keys in etc/apikeys.json')
         self.headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
 
 
@@ -31,8 +34,8 @@ class Plugin(object):
                 data = response.json()
                 self.artifact['data']['passivetotal'] = data
 
-        except:
-            pass
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
 def main(artifact):

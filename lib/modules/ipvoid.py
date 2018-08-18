@@ -34,8 +34,8 @@ class Plugin(object):
                         site = each.parent.parent.td.text.lstrip()
                         url = each.parent.a['href']
                         self.artifact['data']['ipvoid'] = {site: url}
-        except:
-            pass
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
 def main(artifact):
@@ -44,4 +44,5 @@ def main(artifact):
         plugin.run()
     else:
         warning('IPVoid only accepts artifacts of subtype IPv4')
+
     return plugin.artifact

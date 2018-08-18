@@ -5,6 +5,7 @@
 ##
 from http import get
 
+from common import warning
 from common import get_apikey
 
 
@@ -13,6 +14,8 @@ class Plugin(object):
         self.artifact = artifact
         self.artifact['data']['shodan'] = None
         self.api_key = get_apikey('shodan')
+        if self.api_key == '':
+            raise TypeError('API keys cannot be left blank | set all keys in etc/apikeys.json')
         self.headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus'}
 
     def fqdn(self):
@@ -20,11 +23,10 @@ class Plugin(object):
 
         try:
             status, response = get(url, headers=self.headers)
-
             if status:
                 self.artifact['data']['shodan'] = response.json()
-        except:
-            pass
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
     def ip(self):
@@ -32,11 +34,10 @@ class Plugin(object):
 
         try:
             status, response = get(url, headers=self.headers)
-
             if status:
                 self.artifact['data']['shodan'] = response.json()
-        except:
-            pass
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
     def run(self):

@@ -13,6 +13,7 @@ class Plugin(object):
         self.artifact = artifact
         self.artifact['data']['hackedemails'] = None
 
+
     def run(self):
         url = 'https://hacked-emails.com/api?q=%s' % self.artifact['name']
         headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}

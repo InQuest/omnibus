@@ -10,7 +10,6 @@ from common import is_fqdn
 from common import is_hash
 
 from common import warning
-
 from common import timestamp
 from common import detect_type
 
@@ -32,24 +31,32 @@ class Artifact(object):
         self.notes = []
         self.data = {}
 
-        if self.type == 'host':
-            if is_ipv4(self.name):
-                self.subtype = 'ipv4'
-            elif is_ipv6(self.name):
-                self.subtype = 'ipv6'
-            elif is_fqdn(self.name):
-                self.subtype = 'fqdn'
-            else:
-                warning('host type cannot be determined. must be one of: ipv4, ipv6, fqdn')
-                self.subtype = 'unknown'
+        if self.subtype is None:
+            if self.type == 'host':
+                if is_ipv4(name):
+                    self.subtype = 'ipv4'
+                elif is_ipv6(name):
+                    self.subtype = 'ipv6'
+                elif is_fqdn(name):
+                    self.subtype = 'fqdn'
+                else:
+                    warning('host subtype is not one of: ipv4, ipv6, fqdn')
 
-        elif self.type == 'hash':
-            result = is_hash(self.name)
-            if result is None:
-                warning('hash is not a valid md5, sha1, sha256, or sha512')
-                self.subtype = 'unknown'
-            else:
-                self.subtype = result
+            elif self.type == 'hash':
+                hash_type = is_hash(name)
+                if hash_type is None:
+                    warning('hash is not a valid md5, sha1, sha256, or sha512')
+                else:
+                    self.subtype = hash_type
+
+            elif self.type == 'user':
+                self.subtype = 'account'
+
+            elif self.type == 'email':
+                self.subtype = 'account'
+
+            elif self.type == 'btc':
+                self.subtype = 'cryptocurrency address'
 
 
 def create_artifact(artifact_name, _type=None, source=None, subtype=None, parent=None):

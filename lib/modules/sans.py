@@ -5,6 +5,8 @@
 ##
 import dshield
 
+from common import warning
+
 
 class Plugin(object):
     def __init__(self, artifact):
@@ -25,8 +27,8 @@ class Plugin(object):
                             'source': 'SANS ISC',
                             'subtype': 'fqdn'
                         })
-        except:
-            pass
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
 def main(artifact):

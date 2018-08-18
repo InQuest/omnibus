@@ -14,6 +14,8 @@ class Plugin(object):
         self.artifact = artifact
         self.artifact['data']['ipinfo'] = None
         self.api_key = get_apikey('ipinfo')
+        if self.api_key == '':
+            raise TypeError('API keys cannot be left blank | set all keys in etc/apikeys.json')
         self.headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
 
 
@@ -25,6 +27,7 @@ class Plugin(object):
 
             if status:
                 self.artifact['data']['ipinfo'] = response.json()
+
         except Exception as err:
             warning('Caught exception in module (%s)' % str(err))
 

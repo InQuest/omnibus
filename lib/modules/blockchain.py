@@ -14,6 +14,7 @@ class Plugin(object):
         self.artifact['data']['blockchain'] = None
         self.headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
 
+
     def run(self):
         url = 'https://blockchain.info/rawaddr/%s' % self.artifact['name']
 
@@ -29,3 +30,4 @@ def main(artifact):
     plugin = Plugin(artifact)
     plugin.run()
     return plugin.artifact
+

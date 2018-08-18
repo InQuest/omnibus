@@ -74,7 +74,8 @@ def pp_json(data):
     if data is None:
         pass
     else:
-        print(highlight(unicode(json.dumps(data, indent=4, default=jsondate), 'UTF-8'), lexers.JsonLexer(), formatters.TerminalFormatter()))
+        print(highlight(unicode(json.dumps(data, indent=4, default=jsondate), 'UTF-8'),
+            lexers.JsonLexer(), formatters.TerminalFormatter()))
 
 
 def get_option(section, name, conf):
@@ -94,9 +95,9 @@ def get_option(section, name, conf):
 def get_apikey(service):
     """ Read API key config file and return API key by service name """
     if os.path.exists(API_CONF):
-        data = load_json(API_CONF)
-        if service in data.keys():
-            return data[service]
+        api_keys = load_json(API_CONF)
+        if service in api_keys.keys():
+            return api_keys[service]
     else:
         error('cannot find API keys file: %s' % API_CONF)
 
@@ -133,14 +134,22 @@ def write_file(file_path, data):
         return False
 
 
+def is_valid(file_path):
+    """ Check if a given path is a valid file with data in it """
+    if os.path.exists(file_path) and os.path.isfile(file_path) \
+            and os.path.getsize(file_path) > 0:
+        return True
+    return False
+
+
 def read_file(file_path, lines=False):
     """ Read a given file and optionally return content lines or raw data """
     if is_valid(file_path):
         if lines:
-            _data = (open(file_path, 'rb').read()).split('\n')
+            data = (open(file_path, 'rb').read()).split('\n')
         else:
-            _data = open(file_path, 'rb').read()
-        return _data
+            data = open(file_path, 'rb').read()
+        return data
     return False
 
 
@@ -149,14 +158,6 @@ def load_json(file_name):
     if is_valid(file_name):
         return json.load(open(file_name, 'rb'))
     return None
-
-
-def is_valid(file_path):
-    """ Check if a given path is a valid file with data in it """
-    if os.path.exists(file_path) and os.path.isfile(file_path) \
-            and os.path.getsize(file_path) > 0:
-        return True
-    return False
 
 
 def mkdir(path):
@@ -172,21 +173,22 @@ def mkdir(path):
             return False
 
 
-def lookup_key(session, artifact):
-    """ Check if entry is a valid session key and return value if true """
+def get_session_key(session, artifact):
+    """ Attempt to see if artifact has a valid session key and return if True """
     value = None
-    is_key = False
+    valid_key = False
+
     if session is None:
-        return (is_key, value)
+        return (valid_key, value)
 
     try:
         artifact = int(artifact)
-        is_key = True
         value = session.get(artifact)
+        valid_key = True
     except:
         pass
 
-    return (is_key, value)
+    return (valid_key, value)
 
 
 def utf_decode(data):
@@ -285,7 +287,7 @@ def detect_type(artifact):
         return 'btc'
     else:
         try:
-            accepted = set(string.ascii_letters + string.digits + '_')
+            accepted = set(string.ascii_letters + string.digits + '_' + '-')
             if set(artifact) <= accepted:
                 return 'user'
         except:

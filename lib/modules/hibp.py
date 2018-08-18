@@ -38,10 +38,8 @@ class Plugin(object):
 
 
     def run(self):
-        self.artifact['data']['hibp'] = {'breaches': None, 'pastes': None}
         self.breaches()
         self.pastes()
-
 
 
 def main(artifact):

@@ -6,6 +6,8 @@
 
 import feedparser
 
+from common import warning
+
 
 class Plugin(object):
     def __init__(self, feed_url):
@@ -16,16 +18,19 @@ class Plugin(object):
     def run(self):
         try:
             feed = feedparser.parse(self.url)
+
             for idx, item in enumerate(feed['entries']):
                 if idx == 19:
                     break
+
                 else:
                     self.results.append({
                         'url': item['url'],
                         'title': item['title']
                     })
-        except:
-            pass
+
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
 
