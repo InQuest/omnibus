@@ -7,11 +7,10 @@ import string
 import datetime
 import ConfigParser
 
-from hashlib import sha256
-
 from pygments import lexers
 from pygments import highlight
 from pygments import formatters
+
 
 jsondate = lambda obj: obj.isoformat() if isinstance(obj, datetime) else None
 
@@ -26,8 +25,7 @@ re_md5 = re.compile("\\b[a-f0-9]{32}\\b", re.I | re.S | re.M)
 re_sha1 = re.compile("\\b[a-f0-9]{40}\\b", re.I | re.S | re.M)
 re_sha256 = re.compile("\\b[a-f0-9]{64}\\b", re.I | re.S | re.M)
 re_sha512 = re.compile("\\b[a-f0-9]{128}\\b", re.I | re.S | re.M)
-
-b58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+re_btc = re.compile('^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$')
 
 BOLD = "\033[1m"
 RED = '\033[31m'
@@ -72,7 +70,7 @@ def error(msg):
 
 def pp_json(data):
     if data is None:
-        pass
+        warning('No data returned from module.')
     else:
         print(highlight(unicode(json.dumps(data, indent=4, default=jsondate), 'UTF-8'),
             lexers.JsonLexer(), formatters.TerminalFormatter()))
@@ -254,23 +252,16 @@ def is_hash(string):
         return False
 
 
-def decode_base58(str, length):
-    """ Decode base58 encoded string """
-    c = 0
-
-    for char in str:
-        c = c * 58 + b58.index(char)
-
-    return c.to_bytes(length, 'big')
-
-
 def is_btc_addr(string):
-    """ Check if string is a valid Bitcoin address"""
-    try:
-        b = decode_base58(string, 25)
-        return b[-4:] == sha256(sha256(b[:-4]).digest()).digest()[:4]
-    except:
-        return False
+    """Check if string is matches as a Bitcoin address.
+
+    @note: This does not verify that the string is a VALID BTC address,
+    only that it matches the regex pattern of BTC addresses.
+    """
+    if re.match(re_btc, string):
+        return 'btc'
+    return False
+
 
 
 def detect_type(artifact):

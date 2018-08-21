@@ -70,6 +70,7 @@ class Plugin(object):
                                     'subtype': 'ipv4',
                                     'source': 'VirusTotal'
                                 })
+
         except Exception as err:
             warning('Caught exception in module (%s)' % str(err))
 
@@ -91,6 +92,7 @@ class Plugin(object):
                             del data['scans'][av]
 
                     self.artifact['data']['virustotal'] = data
+
         except Exception as err:
             warning('Caught exception in module (%s)' % str(err))
 
