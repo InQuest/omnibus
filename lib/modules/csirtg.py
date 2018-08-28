@@ -3,6 +3,7 @@ from csirtgsdk.search import Search
 
 from common import get_apikey
 from common import warning
+from common import error
 
 
 class Plugin(object):
@@ -10,10 +11,13 @@ class Plugin(object):
         self.artifact = artifact
         self.artifact['data']['csirtg'] = None
         self.api_key = get_apikey('csirtg')
-        if self.api_key == '':
-            raise TypeError('API keys cannot be left blank | set all keys in etc/apikeys.json')
+
 
     def run(self):
+        if self.api_key == '':
+            error('API keys cannot be left blank | set all keys in etc/apikeys.json')
+            return
+
         try:
             client = Client(remote='https://csirtg.io/api', token=self.api_key)
             search = Search(client)

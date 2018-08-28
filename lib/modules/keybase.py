@@ -25,6 +25,7 @@ class Plugin(object):
                 data = response.json()
                 if data['them'][0] is not None:
                     self.artifact['data']['keybase'] = data['them'][0]
+
         except Exception as err:
             warning('Caught exception in module (%s)' % str(err))
 

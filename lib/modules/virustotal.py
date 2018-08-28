@@ -5,6 +5,7 @@
 ##
 from http import get
 
+from common import error
 from common import warning
 from common import get_apikey
 from common import detect_type
@@ -15,8 +16,6 @@ class Plugin(object):
         self.artifact = artifact
         self.artifact['data']['virustotal'] = None
         self.api_key = get_apikey('virustotal')
-        if self.api_key == '':
-            raise TypeError('API keys cannot be left blank | set all keys in etc/apikeys.json')
         self.headers = {
             'Accept-Encoding': 'gzip, deflate',
             'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'
@@ -24,6 +23,10 @@ class Plugin(object):
 
 
     def ip(self):
+        if self.api_key == '':
+            error('API keys cannot be left blank | set all keys in etc/apikeys.json')
+            return
+
         parameters = {'ip': self.artifact['name'], 'apikey': self.api_key}
         url = 'https://www.virustotal.com/vtapi/v2/ip-address/report'
 
@@ -50,6 +53,10 @@ class Plugin(object):
 
 
     def fqdn(self):
+        if self.api_key == '':
+            error('API keys cannot be left blank | set all keys in etc/apikeys.json')
+            return
+
         parameters = {'domain': self.artifact['name'], 'apikey': self.api_key}
         url = 'https://www.virustotal.com/vtapi/v2/domain/report'
 
@@ -76,6 +83,10 @@ class Plugin(object):
 
 
     def hash(self):
+        if self.api_key == '':
+            error('API keys cannot be left blank | set all keys in etc/apikeys.json')
+            return
+
         parameters = {'resource': self.artifact['name'], 'apikey': self.api_key}
         url = 'https://www.virustotal.com/vtapi/v2/file/report'
 

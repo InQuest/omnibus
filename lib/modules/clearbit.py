@@ -7,23 +7,26 @@ from http import get
 
 from common import warning
 from common import get_apikey
+from common import error
 
 
 class Plugin(object):
     def __init__(self, artifact):
         self.artifact = artifact
         self.artifact['data']['clearbit'] = None
-
         self.api_key = get_apikey('clearbit')
-        if self.api_key == '':
-            raise TypeError('API keys cannot be left blank | set all keys in etc/apikeys.json')
 
         self.headers = {
             'Authorization': 'Bearer %s' % self.api_key,
             'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'
         }
 
+
     def run(self):
+        if self.api_key == '':
+            error('API keys cannot be left blank | set all keys in etc/apikeys.json')
+            return
+
         url = 'https://person.clearbit.com/v1/people/email/%s' % self.artifact['name']
 
         try:

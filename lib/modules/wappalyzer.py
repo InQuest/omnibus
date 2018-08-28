@@ -4,7 +4,11 @@
 # Wappalyzer module
 ##
 
+import warnings
+
 import Wappalyzer
+
+from requests.packages.urllib3 import exceptions
 
 from common import warning
 
@@ -28,14 +32,18 @@ class Plugin(object):
         # build Wappalyzer instance using default applications database
         wap = fetty_wap.latest()
 
-        target_url = Wappalyzer.WebPage.new_from_url(self.artifact['name'])
-        result = wap.analyze_with_categories(target_url)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', exceptions.InsecureRequestWarning)
+            warnings.simplefilter('ignore', exceptions.InsecurePlatformWarning)
 
-        if result:
-            self.artifact['data']['wappalyzer'] = result
+            target_url = Wappalyzer.WebPage.new_from_url(self.artifact['name'], verify=False)
+            result = wap.analyze_with_categories(target_url)
 
-        # reset artifact to normal name
-        self.artifact['name'] = self.artifact['name'].strip('http://')[1]
+            if result:
+                self.artifact['data']['wappalyzer'] = result
+
+            # reset artifact to normal name
+            self.artifact['name'] = self.artifact['name'].strip('http://')[1]
 
 
 def main(artifact):

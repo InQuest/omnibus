@@ -14,6 +14,7 @@ import IndicatorTypes
 
 from common import get_apikey
 from common import warning
+from common import error
 
 
 class Plugin(object):
@@ -21,17 +22,15 @@ class Plugin(object):
         self.artifact = artifact
         self.artifact['data']['dnsbrute'] = {}
         self.headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
-
         self.vt_api_key = get_apikey('virustotal')
-        if self.vt_api_key == '':
-            raise TypeError('API keys cannot be left blank | set all keys in etc/apikeys.json')
-
         self.otx_api_key = get_apikey('otx')
-        if self.otx_api_key == '':
-            raise TypeError('API keys cannot be left blank | set all keys in etc/apikeys.json')
 
 
     def otx(self):
+        if self.otx_api_key == '':
+            error('API keys cannot be left blank | set all keys in etc/apikeys.json')
+            return
+
         otx_server = 'https://otx.alienvault.com/'
         otx_conn = OTXv2(self.otx_api_key, server=otx_server)
 
@@ -52,8 +51,12 @@ class Plugin(object):
 
 
     def vt(self):
+        if self.vt_api_key == '':
+            error('API keys cannot be left blank | set all keys in etc/apikeys.json')
+            return
+
         url = 'https://www.virustotal.com/vtapi/v2/domain/report'
-        params = {'domain': self.artifact['name'], 'apikey': self.api_key}
+        params = {'domain': self.artifact['name'], 'apikey': self.vt_api_key}
 
         try:
             status, response = requests.get(url, params=params, headers=self.headers)
@@ -64,6 +67,11 @@ class Plugin(object):
 
         except Exception as err:
             warning('Caught unknown exception: %s' % str(err))
+
+
+    def run(self, artifact):
+        self.otx()
+        self.vt()
 
 
 def main(artifact):

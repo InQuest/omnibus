@@ -22,6 +22,7 @@ class Plugin(object):
             status, response = get(url, headers=self.headers)
             if status:
                 self.artifact['data']['hibp']['breaches'] = response.json()
+
         except Exception as err:
             warning('Caught exception in module (%s)' % str(err))
 
@@ -33,6 +34,7 @@ class Plugin(object):
             status, response = get(url, headers=self.headers)
             if status:
                 self.artifact['data']['hibp']['pastes'] = response.json()
+
         except Exception as err:
             warning('Caught exception in module (%s)' % str(err))
 

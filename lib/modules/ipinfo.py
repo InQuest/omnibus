@@ -14,13 +14,15 @@ class Plugin(object):
         self.artifact = artifact
         self.artifact['data']['ipinfo'] = None
         self.api_key = get_apikey('ipinfo')
-        if self.api_key == '':
-            raise TypeError('API keys cannot be left blank | set all keys in etc/apikeys.json')
         self.headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
 
 
     def run(self):
-        url = 'http://ipinfo.io/%s/json?token=%s' % (self.artifact['name'], self.api_key)
+        if self.api_key == '':
+            error('API keys cannot be left blank | set all keys in etc/apikeys.json')
+            return
+
+        url = 'http://ipinfo.io/{}/json?token={}'.format(self.artifact['name'], self.api_key)
 
         try:
             status, response = get(url, headers=self.headers)

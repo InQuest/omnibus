@@ -5,6 +5,7 @@
 ##
 from http import get
 
+from common import error
 from common import warning
 from common import get_apikey
 
@@ -14,12 +15,14 @@ class Plugin(object):
         self.artifact = artifact
         self.artifact['data']['shodan'] = None
         self.api_key = get_apikey('shodan')
-        if self.api_key == '':
-            raise TypeError('API keys cannot be left blank | set all keys in etc/apikeys.json')
         self.headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus'}
 
     def fqdn(self):
-        url = 'https://api.shodan.io/shodan/host/search?key=%s&query=hostname:%s&facets={facets}' % (self.api_key, self.artifact['name'])
+        if self.api_key == '':
+            error('API keys cannot be left blank | set all keys in etc/apikeys.json')
+            return
+
+        url = 'https://api.shodan.io/shodan/host/search?key={}&query=hostname:{}&facets={{facets}}'.format(self.api_key, self.artifact['name'])
 
         try:
             status, response = get(url, headers=self.headers)
@@ -30,7 +33,11 @@ class Plugin(object):
 
 
     def ip(self):
-        url = 'https://api.shodan.io/shodan/host/%s?key=%s' % (self.artifact['name'], self.api_key)
+        if self.api_key == '':
+            error('API keys cannot be left blank | set all keys in etc/apikeys.json')
+            return
+
+        url = 'https://api.shodan.io/shodan/host/{}?key={}'.format(self.artifact['name'], self.api_key)
 
         try:
             status, response = get(url, headers=self.headers)

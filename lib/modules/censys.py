@@ -8,6 +8,7 @@ from http import get
 
 from common import get_apikey
 from common import warning
+from common import error
 
 
 class Plugin(object):
@@ -15,12 +16,14 @@ class Plugin(object):
         self.artifact = artifact
         self.artifact['data']['censys'] = None
         self.api_key = get_apikey('censys')
-        if self.api_key == '':
-            raise TypeError('API keys cannot be left blank | set all keys in etc/apikeys.json')
         self.headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
 
 
     def run(self):
+        if self.api_key == '':
+            error('API keys cannot be left blank | set all keys in etc/apikeys.json')
+            return
+
         url = 'https://censys.io/api/v1/view/ipv4/%s' % self.artifact['name']
 
         try:

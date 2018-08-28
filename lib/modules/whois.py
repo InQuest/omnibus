@@ -46,8 +46,8 @@ class Plugin(object):
         try:
             results = whois.whois(self.artifact['name'])
             self.artifact['data']['whois'] = results
-        except:
-            pass
+        except Exception as err:
+            warning('Caught unhandled exception: %s' % str(err))
 
 
     def run(self):

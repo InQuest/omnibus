@@ -22,8 +22,6 @@ class Plugin(object):
         try:
             res = dns.resolver.query(domain, record)
             for item in res:
-                if item.endswith('.'):
-                    item = item.rstrip('.')
                 if item not in results:
                     results.append(str(item))
         except Exception as err:
@@ -45,15 +43,12 @@ class Plugin(object):
             'TXT': 'Not Found'
         }
 
-        for key in self.artifact['data']['dnsresolve'].keys():
-            self.artifact['data']['dnsresolve'][key] = self.get_record(domain, key)
-
-        # self.artifact['data']['dnsresolve']['A'] = self.get_record(domain, 'A')
-        # self.artifact['data']['dnsresolve']['AAAA'] = self.get_record(domain, 'AAAA')
-        # self.artifact['data']['dnsresolve']['CNAME'] = self.get_record(domain, 'CNAME')
-        # self.artifact['data']['dnsresolve']['NS'] = self.get_record(domain, 'NS')
-        # self.artifact['data']['dnsresolve']['MX'] = self.get_record(domain, 'MX')
-        # self.artifact['data']['dnsresolve']['TXT'] = self.get_record(domain, 'TXT')
+        self.artifact['data']['dnsresolve']['A'] = self.get_record(domain, 'A')
+        self.artifact['data']['dnsresolve']['AAAA'] = self.get_record(domain, 'AAAA')
+        self.artifact['data']['dnsresolve']['CNAME'] = self.get_record(domain, 'CNAME')
+        self.artifact['data']['dnsresolve']['NS'] = self.get_record(domain, 'NS')
+        self.artifact['data']['dnsresolve']['MX'] = self.get_record(domain, 'MX')
+        self.artifact['data']['dnsresolve']['TXT'] = self.get_record(domain, 'TXT')
 
         for host in self.artifact['data']['dnsresolve']:
             if isinstance(host, str):

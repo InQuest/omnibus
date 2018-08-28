@@ -8,6 +8,8 @@ from BeautifulSoup import BeautifulSoup
 
 from http import get
 
+from common import warning
+
 
 class Plugin(object):
     def __init__(self, artifact):
@@ -36,8 +38,8 @@ class Plugin(object):
                 self.artifact['data']['twitter']['description'] = soup.find('div', class_='ProfileHeaderCard').contents[5].text
                 self.artifact['data']['twitter']['created'] = soup.find('div', class_='ProfileHeaderCard-joinDate').contents[3].text
 
-        except:
-            pass
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
 def main(artifact):

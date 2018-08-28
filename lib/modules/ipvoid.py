@@ -34,6 +34,7 @@ class Plugin(object):
                         site = each.parent.parent.td.text.lstrip()
                         url = each.parent.a['href']
                         self.artifact['data']['ipvoid'] = {site: url}
+
         except Exception as err:
             warning('Caught exception in module (%s)' % str(err))
 

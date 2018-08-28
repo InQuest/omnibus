@@ -49,6 +49,7 @@ class Plugin(object):
                 hosts = re.findall(pattern, response.text)
                 for h in hosts:
                     result.append(h.strip())
+
         except Exception as err:
             warning('Caught exception in module (%s)' % str(err))
 
