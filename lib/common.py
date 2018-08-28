@@ -1,4 +1,13 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+##
+# App: Omnibus - InQuest Labs
+# Website: https://www.inquest.net
+# Author: Adam M. Swanda
+# ---
+# Purpose: commonly used functions throughout entire app
+##
+
 import os
 import re
 import sys
@@ -10,6 +19,9 @@ import ConfigParser
 from pygments import lexers
 from pygments import highlight
 from pygments import formatters
+
+from constants import api_keys
+from constants import app_conf
 
 
 jsondate = lambda obj: obj.isoformat() if isinstance(obj, datetime) else None
@@ -35,37 +47,35 @@ PURPLE = '\033[95m'
 DARKBLUE = '\033[38;5;24m'
 END_COLOR = '\033[0m'
 
-API_CONF = '%s/etc/apikeys.json' % os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
-
 
 def bold_msg(msg):
     """Bold a message"""
-    print('%s%s%s' % (BOLD, msg, END_COLOR))
+    print(f'{BOLD}{msg}{END_COLOR}')
 
 
 def info(msg):
     """ Informational message """
-    print('%s%s[*]%s %s' % (BOLD, DARKBLUE, END_COLOR, msg))
+    print(f'{BOLD}{DARKBLUE}[*]{END_COLOR} {msg}')
 
 
 def running(msg):
     """ Background task message """
-    print('%s%s[*]%s %s' % (BOLD, PURPLE, END_COLOR, msg))
+    print(f'{BOLD}{PURPLE}[*]{END_COLOR} {msg}')
 
 
 def success(msg):
     """ Successful completion message"""
-    print('%s%s[~]%s %s' % (BOLD, GREEN, END_COLOR, msg))
+    print(f'{BOLD}{GREEN}[~]{END_COLOR} {msg}')
 
 
 def warning(msg):
     """ Non-fatal error message """
-    print('%s%s[!]%s %s' % (BOLD, YELLOW, END_COLOR, msg))
+    print(f'{BOLD}{YELLOW}[!]{END_COLOR} {msg}')
 
 
 def error(msg):
     """ Error that stops proper task completion message """
-    print('%s%s[!]%s %s' % (BOLD, RED, END_COLOR, msg))
+    print(f'{BOLD}{RED}[!]{END_COLOR} {msg}')
 
 
 def pp_json(data):
@@ -76,12 +86,12 @@ def pp_json(data):
             lexers.JsonLexer(), formatters.TerminalFormatter()))
 
 
-def get_option(section, name, conf):
+def get_option(section, name):
     config = ConfigParser.ConfigParser()
-    if not os.path.exists(conf):
-        error('configuration file %s does not exist!' % conf)
+    if not os.path.exists(app_conf):
+        error('configuration file %s does not exist!' % app_conf)
         return None
-    config.read(conf)
+    config.read(app_conf)
     answer = None
     try:
         answer = config.get(section, name)
@@ -92,12 +102,12 @@ def get_option(section, name, conf):
 
 def get_apikey(service):
     """ Read API key config file and return API key by service name """
-    if os.path.exists(API_CONF):
-        api_keys = load_json(API_CONF)
-        if service in api_keys.keys():
-            return api_keys[service]
+    if os.path.exists(api_keys):
+        api_conf = load_json(api_keys)
+        if service in api_conf.keys():
+            return api_conf[service]
     else:
-        error('cannot find API keys file: %s' % API_CONF)
+        error('cannot find API keys file: %s' % api_keys)
 
 
 def timestamp():
@@ -165,10 +175,21 @@ def mkdir(path):
     else:
         try:
             os.mkdir(path)
-            os.chmod(path, 0777)
+            os.chmod(path, 0o777)
             return True
         except:
             return False
+
+
+def to_bool(s):
+    """ Convert string answer to boolean """
+    s = s.lower()
+    if s == 'true' or s == 'yes' or s == 'y':
+        return True
+    elif s == 'false' or s == 'no' or s == 'n':
+        return False
+    else:
+        raise ValueError('Input must be one of: true, yes, y, false, no, n')
 
 
 def lookup_key(session, artifact):
