@@ -1,12 +1,13 @@
 pymongo==3.5.1
-cmd2==0.8.2
+cmd2==0.8.9
 threatcrowd==0.4
 cymon==0.1
 redis==2.10.6
-requests==2.7.0
+requests
 ipwhois==1.0.0
 python-whois==0.6.9
 censys==0.0.8
 BeautifulSoup==3.2.1
 fuzzyfinder==2.1.0
 dnspython==1.15.0
+python-Wappalyzer==0.2.2
