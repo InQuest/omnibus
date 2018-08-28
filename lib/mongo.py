@@ -1,25 +1,28 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ##
-# omnibus - deadbits.
-# mongodb interaction
+# App: Omnibus - InQuest Labs
+# Website: https://www.inquest.net
+# Author: Adam M. Swanda
+# ---
+# Purpose: MongoDB interaction
 ##
 
 import pymongo
 
 from common import error
-
 from common import get_option
 
 
 class Mongo(object):
-    def __init__(self, config):
-        self._host = get_option('mongo', 'host', config)
-        self._port = int(get_option('mongo', 'port', config))
-        self._server = '%s:%s' % (self._host, self._port)
+    def __init__(self):
+        self._host = get_option('databases', 'mongo_host')
+        self._port = int(get_option('databases', 'mongo_port'))
+        self._server = '{self._host}:{self._port}'.format(self.host, self._port)
         try:
             self.conn = pymongo.MongoClient(self._server)
         except Exception as err:
-            error('failed to connect to Mongo instance: %s' % str(err))
+            error('failed to connect to Mongo instance; exiting. ({})'.format(err))
             raise err
 
         self.db = self.conn['omnibus']
@@ -62,7 +65,7 @@ class Mongo(object):
         try:
             doc_id = coll.insert(data)
         except Exception as err:
-            error('failed to index data: %s' % str(err))
+            error('failed to index data: {} - {}'.format(data, err))
             pass
 
         return str(doc_id)
@@ -74,8 +77,8 @@ class Mongo(object):
 
         try:
             doc_id = coll.update(query, {'$set': new_data})
-        except:
-            error('failed to update documents: %s' % query)
+        except Exception as err:
+            error('failed to update documents: {} - {}'.format(query, err))
 
         return doc_id
 
@@ -84,8 +87,8 @@ class Mongo(object):
         coll = self.use_coll(collection)
         try:
             coll.remove(query)
-        except:
-            error('failed to delete documets: %s' % query)
+        except Exception as err:
+            error('failed to delete documents: {} - {}'.format(query, err))
             pass
 
 

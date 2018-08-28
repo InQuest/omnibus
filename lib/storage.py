@@ -1,8 +1,13 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ##
-# omnibus - deadbits.
-# output storage management
+# App: Omnibus - InQuest Labs
+# Website: https://www.inquest.net
+# Author: Adam M. Swanda
+# ---
+# Purpose: Manage storing report files
 ##
+
 import os
 import json
 
@@ -19,7 +24,7 @@ class JSON(object):
         self.file_path = None
 
         if file_name == 'report.json':
-            self.file_name = '%s_%s.json' % (data['name'], timestamp)
+            self.file_name = '{}_{}.json'.format(data['name'], timestamp)
         else:
             self.file_name = file_name
 
@@ -32,10 +37,10 @@ class JSON(object):
             self.file_path = os.path.join(file_path, file_name)
             if not os.path.exists(self.file_path):
                 self.save()
-                success('saved report to %s' % self.file_path)
+                success('saved report to {}'.format(self.file_path))
             return False
         else:
-            error('unable to find directory %s - cannot save report' % file_path)
+            error('unable to find directory {} - cannot save report'.format(file_path))
             return False
 
 
