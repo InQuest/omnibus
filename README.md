@@ -1,12 +1,15 @@
 # OSINT Omnibus
-![Release](https://img.shields.io/badge/Release-Alpha-blue.svg)  
-Provided by [InQuest](https://www.inquest.net)
+- Developed & maintained by [InQuest](https://www.inquest.net)
+- ![Release](https://img.shields.io/badge/Release-Beta-blue.svg)
+- [![Rawsec's CyberSecurity Inventory](http://list.rawsec.ml/img/badges/Rawsec-inventoried-FF5050_flat_without_logo.svg)](http://list.rawsec.ml/tools.html#Omnibus)
+
 
 Table of Contents
-=================
+===============================
 
 * [OSINT Omnibus](#osint-omnibus)
   * [Omnibus](#omnibus)
+    * [Documentation](#documentation)
     * [Vocabulary](#vocabulary)
     * [Running Omnibus](#running-omnibus)
       * [API Keys](#api-keys)
@@ -21,11 +24,10 @@ Table of Contents
     * [Monitoring Modules](#monitoring-modules)
 
 # OSINT Omnibus
-![Release](https://img.shields.io/badge/Release-Alpha-blue.svg)
+- Developed & maintained by [InQuest](https://www.inquest.net)
+- ![Release](https://img.shields.io/badge/Release-Beta-blue.svg)
+- [![Rawsec's CyberSecurity Inventory](http://list.rawsec.ml/img/badges/Rawsec-inventoried-FF5050_flat_without_logo.svg)](http://list.rawsec.ml/tools.html#Omnibus)
 
-Provided by [InQuest](https://www.inquest.net)
-
-There will be some bugs as this is a very early release of the application (pre-alpha). If you do happen to use notice any modules that fail or other bugs, please create an Issue and/or Pull Request. Both are more than welcome as we'd love to expand this framework as we go on!
 
 ## Omnibus
 An Omnibus is defined as `a volume containing several novels or other items previously published separately` and that is exactly what the InQuest Omnibus project intends to be for Open Source Intelligence collection, research, and artifact management.
@@ -36,17 +38,22 @@ This project has taken motivation from the greats that came before it such as Sp
 
 The application is written with Python 2.7 in mind and has been successfully tested on OSX and Ubuntu 16.04 environments.
 
-As this is a pre-release of the final application, there will very likely be some bugs and uncaught exceptions or other weirdness during usage. Though for the most part, it is fully functional and can be used to begin OSINT investigations right away.
+This is a beta of the final application and as such there may be some bugs or other weirdness during usage. For the most part Omnibus is fully functional and can be used to begin OSINT investigation right away.
 
 ### Contribution
-Omnibus is built in a modular manner that allows the easy addition, or removal, of OSINT plugins. Each module is included in a single directory and by adding a few lines of code, you're module could be the next one!
+Omnibus is built in a modular manner that allows the easy addition of OSINT data source modules and import/export modules. Each module per category is included in a single directory, and by adding a few lines of code, your module could be the next!
 
-As this README and the Wiki continues to grow, we will have full-fledged examples of how to write custom plugins and get them in as Pull Requests!
+As the Wiki continues to grow, we will have full examples of how to write custom plugins.
+
+If you happen to notice any bugs or other issues, please create an Issue and/or Pull Request. We would also love for community support in creating more modules and expanding the Omnibus use-cases. Forks and Pull Requests for new features are more than welcome!
+
+### Documentation
+This README file serves as a quick overview of Omnibus and its features. Full documentation is available in the 'docs' folder of this repository.
 
 ### Vocabulary
 Before we begin we'll need to cover some terminology used by Omnibus.
 
-* Artifact: 
+* Artifact:
   - An item to investigate
   - Artificats can be created in two ways:
     - Using the `new` command or by being discoverd through module execution
@@ -54,11 +61,11 @@ Before we begin we'll need to cover some terminology used by Omnibus.
   - Cache of artifacts created after starting the Omnibus CLI
   - Each artifact in a session is given an ID to quickly identify and retrieve the artifact from the cache
   - Commands can be executed against an artifact either by providing it's name or it's corresponding session ID
-* Module: 
+* Module:
   - Python script that performs some arbitirary OSINT task against an artifact
 
 ### Running Omnibus
-Starting up Omnibus for investigation is a simple as cloning this GitHub repository, install the Python requirements using `pip install -r requirements.txt` and then running `python2.7 omnibus-cli.py`.
+Starting up Omnibus for investigation is a simple as cloning this GitHub repository, installing the Python requirements using `pip install -r requirements.txt` and running `python omnibus-cli.py`.
 
 **Omnibus Shell - Main Startup**
 ![Alt text](docs/images/omnishell.png?raw=true "Shell")
@@ -66,21 +73,23 @@ Starting up Omnibus for investigation is a simple as cloning this GitHub reposit
 For a visual reference of the CLI, pictured above is the Omnibus console after a new session has been started, 2 artifacts have been added to a session, and the `help` menu is shown.
 
 #### API Keys
-You must set any API keys you'd like to use within modules inside the `omnibus/etc/apikeys.json` file. 
-This file is a JSON ocument and has placeholders for all the services which require API keys, and is only accessed by Omnibus on a per module basis to retrieve the exact API key a module needs to execute. 
+You must set any API keys you'd like to use within modules inside the `omnibus/etc/apikeys.json` file.
+This file is a JSON ocument with placeholders for all the services which require API keys, and is only accessed by Omnibus on a per module basis to retrieve the exact API key a module needs to execute.
 
 It should be noted that most of the services requiring API keys have free accounts and API keys. Some free accounts may have lower resource limits, but that hasn't been a problem during smaller daily investigations or testing the application.
 
-**A handy tip** is using the `cat apikeys` command to view which keys you do in fact have stored.  
-If modules are failing, check here first to ensure your API key is properly saved. 
+**A handy tip**: Use the `cat apikeys` command to view which keys you do in fact have stored.
+If modules are failing or returning no results, check here first to ensure your API key is properly saved.
 
 ### Interactive Console
-When you first run the CLI, you'll be greeted by a help menu with some basic information. We tried to build the command line script attempts to mimic some common Linux console commands for ease of use. Omnibus provides commandssuch as `cat` to show information about an artifact, `rm` to remove an artifact from the database, `ls` to view currently session artifacts, and so on.
+When you first run the CLI, you'll be greeted by a help menu with some basic information.
+Omnibus tries to use commands that mimic some common Linux commands for familiarity and ease of use. For example, the command `cat` to show information about and artifact, `rm` to remove an artifact from the database, `ls` for view current session artifacts, and output redirection support for any command using the `>` character.
 
-One additional feature of note is the use of the `>` character for output redirection. For example, if you wish to retrieve the details of an artifact named "inquest.net" saved to a JSON file on your local disk you'd simply run the command:
-`cat inquest.net > inquest-report.json` and there it would be! This feature also works with full file paths instead of simply local.
+As an example of output redirection, if you wish to retrieve the details of an artifact named "inquest.net" saved to a JSON file on your local disk you'd simply run the command:
+`cat inquest.net > inquest-report.json` and there it would be! 
+This feature also works with full file paths instead of relative paths.
 
-The high level commands you really need to know to use Omnibus are:
+The high level commands used in Omnibus most often are:
 * `session`
   - start a new session
 * `new <artifact name>`
@@ -89,16 +98,23 @@ The high level commands you really need to know to use Omnibus are:
   - display list of available modules
 * `open <file path>`
   - load a text file list of artifacts into Omnibus as artifacts
-* `cat <artifact name | session id>`
-  - view beautified JSON database records
 * `ls`
   - show all active artifacts
 * `rm`
   - remove an artifact from the database
 * `wipe`
   - clear the current artifact session
+* `cat <artifact name | session id>`
+  - view beautified JSON database records
+* `<module name> <artifact name | session id>`
+  - run a module against an artifact to view & store the results
+  - newly discovered artifacts from a modules executed are added as children to the original artifact and created in the database as their own new artifacts
+* `<machine name> <artifact name | session id>`
+  - run all modules for an artifacts type against the specified artifact
+  - all results are displayed in the output and stored to the database
+  - provides an easy method to collect bulk information all at once
 
-Also, if you ever need a quick reference on the different commands available for different areas of the application there are sub-help menus for this exact purpose. Using these commands will show you only those commands available relevant to a specific area:
+If you ever need a quick reference on the different commands available for different areas of the application there are sub-help menus for this exact purpose. Using these commands will show you only those commands available relevant to a specific area:
 * `general`
   - overall commands such as help, history, quit, set, clear, banner, etc.
 * `artifacts`
@@ -112,7 +128,7 @@ Also, if you ever need a quick reference on the different commands available for
 #### Overview
 Most cyber investigations begin with one or more technical indicators, such as an IP address, file hash or email address. After searching and analyzing, relationships begin to form and you can pivot through connected data points. These data points are called Artifacts within Omnibus and represent any item you wish to investigate.
 
-Artifacts can be one of the following types: 
+Artifacts can be one of the following types:
 * IPv4 address
 * FQDN
 * Email Address
@@ -121,73 +137,64 @@ Artifacts can be one of the following types:
 * User Name
 
 #### Creating & Managing Artifacts
-The command "new" followed by an artifact will create that artifact within your Omnibus session and store a record of the artifact within MongoDB. This record holds the artifact name, type, subtype, module results, source, notes, tags, children information (as needed) and time of creation. 
+The command "new" followed by an artifact will create that artifact within your Omnibus session and store a record of the artifact within MongoDB. This record holds the artifact name, type, subtype, module results, source, notes, tags, children information (as needed) and time of creation.
 Every time you run a module against a created or stored artifact, the database document will be updated to reflect the newly discovered information.
 
 To create a new artifact and add it to MongoDB for tracking, run the command `new <artifact name>`. For example, to
-start investigation the domain deadbits.org, you would run `new deadbits.org`.
+start investigation the domain inquest.net, you would run `new inquest.net`.
 
-Omnibus will automatically determine what type the artifact is and ensures that only modules for that type are executed against the artifact.
+Omnibus will automatically determine what type the artifact is and ensure that only modules for that type are executed against the artifact. _If you attempt to run an artifact against a module that cannot support the artifact type, you'll be notified by a warning message that lists the accepted types._
 
-When a module is created, new artifacts may be found during the discovery process. For example, running the "dnsresolve" command might find new IPv4 addresses not previously seen by Omnibus. If this is the case, those newly found artifacts are automatically created as new artifacts in Omnibus and linked to their parent with an additional field called "source" to identify from which module they were originally found.
+When a module is created, new artifacts may be found during the discovery process. For example, running the "dnsresolve" command might find new IPv4 addresses not previously seen by Omnibus. If this is the case, those newly found artifacts are automatically created as new artifacts in Omnibus and linked to their parent with an additional field called "source" to identify from which module they were originally found. In this example the source of the newly created artifacts would be "dnsresolve".
 
-Artifacts can be removed from the database using the "delete" command. If you no longer need an artifact, simply run the delete command and specify the artifacts name or the session ID if it has one.
+Artifacts can be removed from the database using the "rm" command. If you no longer need an artifact, simply run the delete command and specify the artifacts name or the session ID if it has one.
 
 ### Sessions
 Omnibus makes use of a feature called "sessions". Sessions are temporary caches created via Redis each time you start a CLI session. Every time you create an artifact, that artifacts name is added to the Session along with a numeric key that makes for easy retrieval, searching, and action against the related artifact.
 For example if you're session held one item of "inquest.net", instead of needing to execute `virustotal inquest.net` you could also run `virustotal 1` and you would receive the same results. In fact, this works against any module or command that uses an artiface name as it's first argument.
 
-Sessions are here for easy access to artifacts and will be cleared each time you quit the command line session.
-If you wish to clear the session early, run the command "wipe" and you'll get clean slate.
-
-Eventually, we would like to add a **Cases** portion to Omnibus that allows users to create cases of artifacts, move between them, and maintain a more coherent OSINT management platform. Though for this current pre-release, we will be sticking with the Session :)
-
 **Interacting with Session IDs instead of Artifact names**
 ![Alt text](docs/images/artifact_id.png?raw=true "Shell")
 
+Sessions are here for easy access to artifacts and will be cleared each time you quit the command line session.
+If you wish to clear the session early, run the command "wipe" and you'll get a clean slate.
 
 ### Modules
 Omnibus currently supports the following list of modules. If you have suggestions or modules or would like to write one
 of your own, please create a pull request.
 
-Also, within the Omnibus console, type the module name will show you the Help information associated with that module.
+Also, within the Omnibus console, typing the module name will show you the Help information associated with that module.
 
 **Modules**
-- Blockchain.info
-- Censys
-- ClearBit
-- Cymon
-- DNS subdomain enumeration
-- DNS resolution
-- DShield (SANS ISC)
-* GeoIP lookup
-- Full Contact
-* Gist Scraping
-* GitHub user search
-* HackedEmails.com email search
-* Hurricane Electric host search
-* HIBP search
-* Hunter.io
+* Blockchain.info
+* Censys
+* ClearBit
+* CSIRTG
+* Cymon
+* DNS resolution
+* DShield (SANS ISC)
+* Full Contact
+* Geolocation
+* GitHub username search
+* HackedEmails.com
+* HaveIBeenPwned.com
+* Hurricane Electric
 * IPInfo
 * IPVoid
-* KeyBase
-* Nmap
+* Keybase username lookup
+* NMap scanner
+* OTX (AlienVault)
 * PassiveTotal
-* Pastebin
-* PGP Email and Name lookup
-* RSS Feed Reader
+* PGP Key Search
+* RSS reader 
 * Shodan
-* Security News Reader
 * ThreatCrowd
 * ThreatExpert
-* TotalHash
 * Twitter
 * URLVoid
 * VirusTotal
-* Web Recon
 * WHOIS
-
-As these modules are a work in progress, some may not yet work as expected but this will change over the coming weeks as we hope to officially release version 1.0 to the world!
+* WhoisMind
 
 ### Machines
 Machines are a simple way to run all available modules for an artifact type against a given artifact. This is a fast way if you want to gather as much information on a target as possible using a single command.
@@ -219,12 +226,3 @@ For example, if you wish to store the output of a VirusTotal lookup for a host t
 
 By default the redirected output files are saved in the current working directory, therefore "omnibus/", but if you specify a full path such as `virustotal inquest.net > /home/adam/intel/cases/001/vt-lookup.json` the JSON formatted output will be saved there.
 
-### Monitoring Modules
-Omnibus will soon be offering the ability to monitor specific keywords and regex patterns across different sources. Once a match is found, an email or text message alert could be sent to the user to inform them on the discovery.
-This could be leveraged for real-time threat tracking, identifying when threat actors appear on new forums or make a fresh Pastebin post, or simply to stay on top of the current news.
-
-Coming monitors include:
-- RSS monitor
-- Pastebin monitor
-- Generic Pastesite monitoring
-- Generic HTTP/JSON monitoring

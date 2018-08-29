@@ -1,4 +1,4 @@
-#!/usr/bin/env pytohn
+#!/usr/bin/env python
 ##
 # omnibus - deadbits
 # module execution for CLI application
@@ -24,7 +24,7 @@ class Dispatch(object):
                 'blockchain'
             ],
             'hash': [
-                'csirtg', 'malcode', 'mdl', 'otx', 'virustotal', 'threatcrowd', 'threatexpert'
+                'csirtg', 'malcode', 'mdl', 'otx', 'virustotal', 'threatcrowd'
             ],
             'ipv4': [
                 'csirtg', 'censys', 'dnsresolve', 'geoip', 'ipinfo', 'ipvoid', 'nmap',
@@ -32,7 +32,7 @@ class Dispatch(object):
                 'whois'
             ],
             'fqdn': [
-                'csirtg', 'dnsresolve', 'geoip', 'ipvoid', 'nmap',
+                'csirtg', 'dnsresolve', 'dnsbrute', 'geoip', 'ipvoid', 'nmap',
                 'shodan', 'virustotal', 'passivetotal', 'threatcrowd', 'he', 'otx',
                 'whois'
             ],

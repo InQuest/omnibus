@@ -6,6 +6,7 @@
 from http import get
 
 from common import get_apikey
+from common import warning
 
 
 class Plugin(object):
@@ -13,10 +14,12 @@ class Plugin(object):
         self.artifact = artifact
         self.artifact['data']['geoip'] = None
         self.api_key = get_apikey('ipstack')
+        if self.api_key == '':
+            raise TypeError('API keys cannot be left blank | set all keys in etc/apikeys.json')
         self.headers = {
             'Accept-Encoding': 'gzip, deflate',
-            'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'
-        }
+            'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
+
 
     def run(self):
         url = 'http://api.ipstack.com/%s?access_key=%s&hostname=1' % (self.artifact['name'], self.api_key)
@@ -26,7 +29,7 @@ class Plugin(object):
 
             if status:
                 results = response.json()
-                self.artifact.data['geoip'] = results
+                self.artifact['data']['geoip'] = results
 
                 if 'hostname' in results.keys():
                     if results['hostname'] != self.artifact['name'] and results['hostname'] != '':
@@ -36,8 +39,8 @@ class Plugin(object):
                             'subtype': 'fqdn',
                             'source': 'ipstack'
                         })
-        except:
-            pass
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
 def main(artifact):

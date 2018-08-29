@@ -5,6 +5,7 @@
 ##
 from http import get
 
+from common import warning
 from common import get_apikey
 from common import detect_type
 
@@ -14,6 +15,8 @@ class Plugin(object):
         self.artifact = artifact
         self.artifact['data']['virustotal'] = None
         self.api_key = get_apikey('virustotal')
+        if self.api_key == '':
+            raise TypeError('API keys cannot be left blank | set all keys in etc/apikeys.json')
         self.headers = {
             'Accept-Encoding': 'gzip, deflate',
             'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'
@@ -42,8 +45,8 @@ class Plugin(object):
                                     'source': 'VirusTotal'
                                 })
 
-        except:
-            pass
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
     def fqdn(self):
@@ -67,8 +70,9 @@ class Plugin(object):
                                     'subtype': 'ipv4',
                                     'source': 'VirusTotal'
                                 })
-        except:
-            pass
+
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
     def hash(self):
@@ -88,8 +92,9 @@ class Plugin(object):
                             del data['scans'][av]
 
                     self.artifact['data']['virustotal'] = data
-        except:
-            pass
+
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
     def run(self):

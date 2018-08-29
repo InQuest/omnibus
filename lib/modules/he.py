@@ -9,6 +9,8 @@ from BeautifulSoup import BeautifulSoup
 
 from http import get
 
+from common import warning
+
 
 class Plugin(object):
     def __init__(self, artifact):
@@ -29,8 +31,9 @@ class Plugin(object):
 
                 for item in data.findAll(attrs={'id': 'dns', 'class': 'tabdata hidden'}):
                     result.append(item.text.strip())
-        except:
-            pass
+
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
     def fqdn(self):
@@ -46,13 +49,14 @@ class Plugin(object):
                 hosts = re.findall(pattern, response.text)
                 for h in hosts:
                     result.append(h.strip())
-        except:
-            pass
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
     def run(self):
         if self.artifact['subtype'] == 'ipv4':
             self.artifact['data']['he'] = self.ip()
+
         elif self.artifact['subtype'] == 'fqdn':
             self.artifact['data']['he'] = self.fqdn()
 

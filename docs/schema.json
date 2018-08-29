@@ -1,0 +1,301 @@
+{
+  "required": [
+    "name",
+    "created",
+    "type",
+    "subtype",
+    "parent",
+    "source",
+    "tags",
+    "children",
+    "data"
+  ],
+
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Root identifier of user or module created artifact",
+      "examples": [
+        "deadbits.org"
+      ]
+    },
+
+    "created": {
+      "type": "string",
+      "description": "UTC timestamp when artifact was created",
+      "examples": [
+        "2018-04-25T18:23:17.170484"
+      ]
+    },
+
+    "type": {
+      "type": "string",
+      "description": "High-level description of artifact",
+      "examples": [
+        "host",
+        "email",
+        "hash",
+        "user",
+        "btc"
+      ]
+    },
+
+    "subtype": {
+      "type": "string",
+      "description": "Lower level description of artifact",
+      "examples": [
+        "fqdn",
+        "ipv4",
+        "md5",
+        "sha1",
+        "sha256",
+        "sha512"
+      ]
+    },
+
+    "parent": {
+      "type": "null",
+      "description": "If root artifact is a child, parent holds the artifact identifier/name that created the child artifact",
+      "default": null,
+      "examples": [
+        "www.deadbits.org"
+      ]
+    },
+
+    "source": {
+      "type": "null",
+      "description": "User or module defined reference for artifacts origin",
+      "default": null,
+      "examples": [
+        "internal research",
+        "dnsresolve",
+        "nmap"
+      ]
+    },
+
+    "tags": {
+      "type": "array",
+      "description": "List of user defined tags describing an artifact",
+      "default": null,
+      "examples": [
+        "cybercrime",
+        "phishing",
+        "legitimate-site"
+      ]
+    },
+
+    "children": {
+      "type": "array",
+      "description": "List of objects defining Artifacts discovered by modules",
+      "default": null,
+    
+      "items": {
+        "type": "object",
+        
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "High-level description of child artifact",
+            "default": "",
+            "examples": [
+              "host"
+            ]
+          },
+
+          "subtype": {
+            "type": "string",
+            "description": "Lower-level description of artifact",
+            "default": "",
+            "examples": [
+                "fqdn",
+                "ipv4",
+                "md5",
+                "sha1",
+                "sha256",
+                "sha512"
+            ]
+          },
+
+          "name": {
+            "type": "string",
+            "description": "Root identifier of user or module created artifact",
+            "default": "",
+            "examples": [
+              "138.197.16.202"
+            ]
+          },
+
+          "source": {
+            "type": "string",
+            "description": "Name of module that created child artifact",
+            "default": [],
+            "examples": [
+              "nmap",
+              "dnsresolve"
+            ]
+          }
+        }
+      }
+    },
+
+    "data": {
+      "type": "object",
+      "description": "Nested objects holding results of module executions",
+      "default": null,
+      
+      "properties": {
+        "nmap": {
+          "type": "object",
+          
+          "properties": {
+            "services": {
+              "type": "array",
+              "items": {
+                "type": "object",
+
+                "properties": {
+                  "banner": {
+                    "type": "string",
+                    "description": "Nmap discovered service banner",
+                    "default": "",
+                    "examples": [
+                      "product: nginx"
+                    ]
+                  },
+                  "protocol": {
+                    "type": "string",
+                    "description": "Nmap discovered protocol",
+                    "default": "",
+                    "examples": [
+                      "tcp"
+                    ]
+                  },
+                  "port": {
+                    "type": "integer",
+                    "description": "Nmap discovered port",
+                    "default": 0,
+                    "examples": [
+                      80
+                    ]
+                  },
+                  "service": {
+                    "type": "string",
+                    "description": "List of Nmap discovered services",
+                    "default": "",
+                    "examples": [
+                      "http"
+                    ]
+                  }
+                }
+              }
+            },
+
+            "ports": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "description": "List of Nmap discovered ports mapped to their protocols",
+                  "default": 0,
+                  "examples": [
+                    80,
+                    "tcp"
+                  ]
+                }
+              }
+            },
+
+            "ipv4": {
+              "type": "string",
+              "description": "Nmap resolved IP address IP of scanned host",
+              "default": "",
+              "examples": [
+                "138.197.16.202"
+              ]
+            }
+          }
+        },
+
+        "dnsresolve": {
+          "type": "object",
+          "properties": {
+            "A": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "description": "DNS A Record",
+                "default": "",
+                "examples": [
+                  "138.197.16.202"
+                ]
+              }
+            },
+            "TXT": {
+              "type": "array",
+              "items": {
+                "type": "null",
+                "description": "DNS TXT record",
+                "default": null,
+                "examples": [
+                  null
+                ]
+              }
+            },
+            "AAAA": {
+              "type": "array",
+              "items": {
+                "type": "null",
+                "description": "DNS AAAA record",
+                "default": null,
+                "examples": [
+                  null
+                ]
+              }
+            },
+            "CNAME": {
+              "type": "array",
+              "items": {
+                "type": "null",
+                "description": "DNS CNAME record",
+                "default": null,
+                "examples": [
+                  null
+                ]
+              }
+            },
+            "NS": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "description": "DNS name server records",
+                "default": "",
+                "examples": [
+                  "ns3.digitalocean.com.",
+                  "ns2.digitalocean.com.",
+                  "ns1.digitalocean.com."
+                ]
+              }
+            },
+            "MX": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "description": "DNS mail server records",
+                "default": "",
+                "examples": [
+                  "1 aspmx.l.google.com",
+                  "5 alt1.aspmx.l.google.com",
+                  "5 alt2.aspmx.l.google.com",
+                  "10 aspmx2.googlemail.com",
+                  "10 aspmx3.googlemail.com"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

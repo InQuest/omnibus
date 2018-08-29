@@ -13,18 +13,21 @@ class Plugin(object):
     def __init__(self, artifact):
         self.artifact = artifact
         self.artifact['data']['clearbit'] = None
+
         self.api_key = get_apikey('clearbit')
+        if self.api_key == '':
+            raise TypeError('API keys cannot be left blank | set all keys in etc/apikeys.json')
 
-
-    def run(self):
-        url = 'https://person.clearbit.com/v1/people/email/%s' % self.artifact['name']
-        headers = {
+        self.headers = {
             'Authorization': 'Bearer %s' % self.api_key,
             'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'
         }
 
+    def run(self):
+        url = 'https://person.clearbit.com/v1/people/email/%s' % self.artifact['name']
+
         try:
-            status, response = get(url, headers=headers)
+            status, response = get(url, headers=self.headers)
 
             if status:
                 if 'error' in response.content and 'queued' in response.content:
@@ -32,8 +35,8 @@ class Plugin(object):
                 else:
                     self.artifact['data']['fullcontact'] = response.json()
 
-        except:
-            pass
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
 def main(artifact):

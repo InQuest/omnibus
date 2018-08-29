@@ -5,6 +5,8 @@
 ##
 import whois
 
+from common import warning
+
 from ipwhois import IPWhois
 
 
@@ -15,19 +17,29 @@ class Plugin(object):
 
 
     def ip(self):
-        whois = IPWhois(self.artifact['name'])
+        whois_data = IPWhois(self.artifact['name'])
 
         try:
-            data = whois.lookup_rdap(depth=1)
+            data = whois_data.lookup_whois()
 
             if data is not None:
                 self.artifact['data']['whois'] = {}
-                self.artifact['data']['whois']['ASN'] = data['asn']
-                self.artifact['data']['whois']['Organization'] = data['network']['name'] if 'network' in data.keys() else None
-                self.artifact['data']['whois']['CIDR'] = data['network']['cidr'] if 'network' in data.keys() else None
-                self.artifact['data']['whois']['Country'] = data['network']['cidr'] if 'network' in data.keys() else None
-        except:
-            pass
+
+                # collect ASN information
+
+                self.artifact['data']['whois']['asn'] = data['asn']
+                self.artifact['data']['whois']['asn']['cidr'] = data['asn_cidr']
+                self.artifact['data']['whois']['asn']['description'] = data['asn_description']
+                self.artifact['data']['whois']['asn']['country'] = data['asn_country_code']
+
+                if 'nets' in data.keys() and len(data['nets']) > 0:
+                    net_data = data['nets'][0]
+                    self.artifact['data']['whois']['address'] = net_data['address']
+                    self.artifact['data']['whois']['state'] = net_data['state']
+                    self.artifact['data']['whois']['emails'] = net_data['emails']
+
+        except Exception as err:
+            warning('Caught unhandled exception: %s' % str(err))
 
 
     def fqdn(self):

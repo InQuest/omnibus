@@ -23,6 +23,7 @@ class Mongo(object):
             raise err
 
         self.db = self.conn['omnibus']
+        self.collections = ['email', 'user', 'host', 'hash', 'bitcoin']
 
 
     def use_coll(self, collection):

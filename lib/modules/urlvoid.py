@@ -6,6 +6,7 @@
 from BeautifulSoup import BeautifulSoup
 
 from http import get
+from common import warning
 
 
 class Plugin(object):
@@ -37,8 +38,8 @@ class Plugin(object):
                         url = each.parent.a['href']
                         self.artifact['data']['urlvoid'][site] = url
 
-        except:
-            pass
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
 def main(artifact):

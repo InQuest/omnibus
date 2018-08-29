@@ -23,8 +23,8 @@ class Plugin(object):
 
             if status:
                 self.artifact['data']['otx'] = response.json()
-        except:
-            pass
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
     def host(self):
@@ -35,8 +35,8 @@ class Plugin(object):
 
             if status:
                 self.artifact['data']['otx'] = response.json()
-        except:
-            pass
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
     def hash(self):
@@ -47,8 +47,8 @@ class Plugin(object):
 
             if status:
                 self.artifact['data']['otx'] = response.json()
-        except:
-            pass
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
     def run(self):

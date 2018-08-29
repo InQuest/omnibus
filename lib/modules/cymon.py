@@ -6,6 +6,7 @@
 import cymon
 
 from common import get_apikey
+from common import warning
 
 
 class Plugin(object):
@@ -13,22 +14,23 @@ class Plugin(object):
         self.artifact = artifact
         self.artifact['data']['cymon'] = None
         self.api_key = get_apikey('cymon')
+        if self.api_key == '':
+            raise TypeError('API keys cannot be left blank | set all keys in etc/apikeys.json')
         self.api = cymon.Cymon(self.api_key)
-
 
 
     def ip(self):
         try:
             self.artifact['data']['cymon'] = self.api.ip_lookup(self.artifact['name'])
-        except:
-            pass
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
     def fqdn(self):
         try:
             self.artifact['data']['cymon'] = self.api.domain_lookup(self.artifact['name'])
-        except:
-            pass
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
     def run(self):

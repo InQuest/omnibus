@@ -48,8 +48,8 @@ class Plugin(object):
                                 'source': 'PGP',
                                 'subtype': None})
 
-        except:
-            pass
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
     def email(self):
@@ -77,10 +77,10 @@ class Plugin(object):
                                     self.artifact['data']['pgp'] = []
                                     self.artifact['data']['pgp'].append(name)
                             except IndexError:
-                                pass
+                                warning('Unable to parse returned PGP web data')
 
-        except:
-            pass
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
     def run(self):

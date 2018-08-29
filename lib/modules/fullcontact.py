@@ -6,6 +6,7 @@
 from http import get
 
 from common import get_apikey
+from common import warning
 
 
 class Plugin(object):
@@ -13,6 +14,8 @@ class Plugin(object):
         self.artifact = artifact
         self.artifact['data']['fullcontact'] = None
         self.api_key = get_apikey('fullcontact')
+        if self.api_key == '':
+            raise TypeError('API keys cannot be left blank | set all keys in etc/apikeys.json')
         self.headers = {
             'X-FullContact-APIKey': self.api_key,
             'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'
@@ -37,8 +40,8 @@ class Plugin(object):
                         }
                         self.artifact['children'].append(child)
 
-        except:
-            pass
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
 def main(artifact):

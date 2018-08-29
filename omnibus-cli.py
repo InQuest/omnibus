@@ -1,4 +1,4 @@
-#!/usr/bin/env pytohn
+#!/usr/bin/env python
 ##
 # The OSINT Omnibus
 # --
@@ -52,10 +52,10 @@ help_dict = {
     ],
     'modules': [
         'blockchain', 'clearbit', 'censys', 'csirtg', 'cymon',
-        'dnsbrute', 'dnsresolve', 'geoip', 'fullcontact', 'gist', 'gitlab', 'github', 'hackedemails', 'he', 'hibp',
-        'hunter', 'ipinfo', 'ipvoid', 'isc', 'keybase', 'machine', 'nmap', 'passivetotal', 'pastebin', 'phishtank',
-        'projecthp', 'pgp', 'reddit', 'rss', 'shodan', 'ssl', 'securitynews', 'threatcrowd',
-        'threatexpert', 'totalhash', 'twitter', 'urlvoid', 'usersearch', 'virustotal', 'web', 'whois'],
+        'dnsresolve', 'geoip', 'fullcontact', 'hackedemails', 'he', 'hibp',
+        'ipinfo', 'ipvoid', 'isc', 'keybase', 'machine', 'nmap', 'passivetotal',
+        'pgp', 'rss', 'shodan', 'threatcrowd',
+        'twitter', 'urlvoid', 'virustotal', 'web', 'whois'],
     'sessions': [
         'session', 'ls', 'rm', 'wipe'
     ]
@@ -388,9 +388,15 @@ class Console(cmd2.Cmd):
         pp_json(result)
 
 
-    def do_abusech(self, arg):
-        """Search Abuse.ch for artifact details """
-        pass
+    # def do_abusech(self, arg):
+    #    """Search Abuse.ch for artifact details """
+    #    pass
+
+
+    def do_blockchain(self, arg):
+        """Search Blockchain.info for BTC address"""
+        result = self.dispatch.submit(self.session, 'blockchain', arg)
+        pp_json(result)
 
 
     def do_clearbit(self, arg):
@@ -417,9 +423,9 @@ class Console(cmd2.Cmd):
         pp_json(result)
 
 
-    def do_dnsbrute(self, arg):
-        """Enumerate DNS subdomains of FQDN """
-        pass
+    # def do_dnsbrute(self, arg):
+    #     """Enumerate DNS subdomains of FQDN """
+    #     pass
 
 
     def do_dnsresolve(self, arg):
@@ -440,14 +446,14 @@ class Console(cmd2.Cmd):
         pp_json(result)
 
 
-    def do_gist(self, arg):
-        """Search Github Gist's for artifact as string """
-        pass
+    # def do_gist(self, arg):
+    #     """Search Github Gist's for artifact as string """
+    #     pass
 
 
-    def do_gitlab(self, arg):
-        """Check Gitlab for active username """
-        pass
+    # def do_gitlab(self, arg):
+    #     """Check Gitlab for active username """
+    #     pass
 
 
     def do_github(self, arg):
@@ -537,14 +543,14 @@ class Console(cmd2.Cmd):
         pp_json(result)
 
 
-    def do_projecthp(self, arg):
-        """Search Project Honeypot for host"""
-        pass
+    # def do_projecthp(self, arg):
+    #     """Search Project Honeypot for host"""
+    #    pass
 
 
-    def do_reddit(self, arg):
-        """Search Reddit for active username"""
-        pass
+    # def do_reddit(self, arg):
+    #     """Search Reddit for active username"""
+    #     pass
 
 
     def do_rss(self, arg):
@@ -555,10 +561,10 @@ class Console(cmd2.Cmd):
         pp_json(result)
 
 
-    def do_securitynews(self, arg):
-        """Get current cybersecurity headlines from Google News"""
-        result = self.dispatch.submit(self.session, 'securitynews', arg, True)
-        pp_json(result)
+    # def do_securitynews(self, arg):
+    #    """Get current cybersecurity headlines from Google News"""
+    #    result = self.dispatch.submit(self.session, 'securitynews', arg, True)
+    #    pp_json(result)
 
 
     def do_shodan(self, arg):
@@ -601,15 +607,9 @@ class Console(cmd2.Cmd):
         pp_json(result)
 
 
-    def do_threatexpert(self, arg):
-        """Search ThreatExpert for host"""
-        result = self.dispatch.submit(self.session, 'threatexpert', arg)
-        pp_json(result)
-
-
-    def do_totalhash(self, arg):
-        """Search TotalHash for host"""
-        pass
+    # def do_totalhash(self, arg):
+    #     """Search TotalHash for host"""
+    #     pass
 
 
     def do_twitter(self, arg):
@@ -624,9 +624,9 @@ class Console(cmd2.Cmd):
         pp_json(result)
 
 
-    def do_usersearch(self, arg):
-        """Search Usersearch.com for active usernames"""
-        pass
+    # def do_usersearch(self, arg):
+    #     """Search Usersearch.com for active usernames"""
+    #     pass
 
 
     def do_virustotal(self, arg):

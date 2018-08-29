@@ -5,6 +5,8 @@
 ##
 from http import get
 
+from common import warning
+
 
 class Plugin(object):
     def __init__(self, artifact):
@@ -20,8 +22,8 @@ class Plugin(object):
             status, response = get(url, headers=self.headers)
             if status:
                 self.artifact['data']['hibp']['breaches'] = response.json()
-        except:
-            pass
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
     def pastes(self):
@@ -31,15 +33,13 @@ class Plugin(object):
             status, response = get(url, headers=self.headers)
             if status:
                 self.artifact['data']['hibp']['pastes'] = response.json()
-        except:
-            pass
+        except Exception as err:
+            warning('Caught exception in module (%s)' % str(err))
 
 
     def run(self):
-        self.artifact['data']['hibp'] = {'breaches': None, 'pastes': None}
         self.breaches()
         self.pastes()
-
 
 
 def main(artifact):

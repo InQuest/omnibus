@@ -3,14 +3,14 @@ import os
 import re
 import sys
 import json
+import string
 import datetime
 import ConfigParser
-
-from hashlib import sha256
 
 from pygments import lexers
 from pygments import highlight
 from pygments import formatters
+
 
 jsondate = lambda obj: obj.isoformat() if isinstance(obj, datetime) else None
 
@@ -25,8 +25,7 @@ re_md5 = re.compile("\\b[a-f0-9]{32}\\b", re.I | re.S | re.M)
 re_sha1 = re.compile("\\b[a-f0-9]{40}\\b", re.I | re.S | re.M)
 re_sha256 = re.compile("\\b[a-f0-9]{64}\\b", re.I | re.S | re.M)
 re_sha512 = re.compile("\\b[a-f0-9]{128}\\b", re.I | re.S | re.M)
-
-b58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+re_btc = re.compile('^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$')
 
 BOLD = "\033[1m"
 RED = '\033[31m'
@@ -71,9 +70,10 @@ def error(msg):
 
 def pp_json(data):
     if data is None:
-        pass
+        warning('No data returned from module.')
     else:
-        print(highlight(unicode(json.dumps(data, indent=4, default=jsondate), 'UTF-8'), lexers.JsonLexer(), formatters.TerminalFormatter()))
+        print(highlight(unicode(json.dumps(data, indent=4, default=jsondate), 'UTF-8'),
+            lexers.JsonLexer(), formatters.TerminalFormatter()))
 
 
 def get_option(section, name, conf):
@@ -93,9 +93,9 @@ def get_option(section, name, conf):
 def get_apikey(service):
     """ Read API key config file and return API key by service name """
     if os.path.exists(API_CONF):
-        data = load_json(API_CONF)
-        if service in data.keys():
-            return data[service]
+        api_keys = load_json(API_CONF)
+        if service in api_keys.keys():
+            return api_keys[service]
     else:
         error('cannot find API keys file: %s' % API_CONF)
 
@@ -132,14 +132,22 @@ def write_file(file_path, data):
         return False
 
 
+def is_valid(file_path):
+    """ Check if a given path is a valid file with data in it """
+    if os.path.exists(file_path) and os.path.isfile(file_path) \
+            and os.path.getsize(file_path) > 0:
+        return True
+    return False
+
+
 def read_file(file_path, lines=False):
     """ Read a given file and optionally return content lines or raw data """
     if is_valid(file_path):
         if lines:
-            _data = (open(file_path, 'rb').read()).split('\n')
+            data = (open(file_path, 'rb').read()).split('\n')
         else:
-            _data = open(file_path, 'rb').read()
-        return _data
+            data = open(file_path, 'rb').read()
+        return data
     return False
 
 
@@ -148,14 +156,6 @@ def load_json(file_name):
     if is_valid(file_name):
         return json.load(open(file_name, 'rb'))
     return None
-
-
-def is_valid(file_path):
-    """ Check if a given path is a valid file with data in it """
-    if os.path.exists(file_path) and os.path.isfile(file_path) \
-            and os.path.getsize(file_path) > 0:
-        return True
-    return False
 
 
 def mkdir(path):
@@ -172,20 +172,21 @@ def mkdir(path):
 
 
 def lookup_key(session, artifact):
-    """ Check if entry is a valid session key and return value if true """
+    """ Attempt to see if artifact has a valid session key and return if True """
     value = None
-    is_key = False
+    valid_key = False
+
     if session is None:
-        return (is_key, value)
+        return (valid_key, value)
 
     try:
         artifact = int(artifact)
-        is_key = True
         value = session.get(artifact)
+        valid_key = True
     except:
         pass
 
-    return (is_key, value)
+    return (valid_key, value)
 
 
 def utf_decode(data):
@@ -251,23 +252,16 @@ def is_hash(string):
         return False
 
 
-def decode_base58(str, length):
-    """ Decode base58 encoded string """
-    c = 0
-
-    for char in str:
-        c = c * 58 + b58.index(char)
-
-    return c.to_bytes(length, 'big')
-
-
 def is_btc_addr(string):
-    """ Check if string is a valid Bitcoin address"""
-    try:
-        b = decode_base58(string, 25)
-        return b[-4:] == sha256(sha256(b[:-4]).digest()).digest()[:4]
-    except:
-        return False
+    """Check if string is matches as a Bitcoin address.
+
+    @note: This does not verify that the string is a VALID BTC address,
+    only that it matches the regex pattern of BTC addresses.
+    """
+    if re.match(re_btc, string):
+        return 'btc'
+    return False
+
 
 
 def detect_type(artifact):
@@ -284,7 +278,8 @@ def detect_type(artifact):
         return 'btc'
     else:
         try:
-            if artifact.isalnum():
+            accepted = set(string.ascii_letters + string.digits + '_' + '-')
+            if set(artifact) <= accepted:
                 return 'user'
         except:
             return None
