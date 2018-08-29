@@ -27,7 +27,7 @@ class Dispatch(object):
                 'csirtg', 'malcode', 'mdl', 'otx', 'virustotal', 'threatcrowd'
             ],
             'ipv4': [
-                'csirtg', 'censys', 'dnsresolve', 'geoip', 'ipinfo', 'ipvoid', 'nmap',
+                'csirtg', 'cybercure', 'censys', 'dnsresolve', 'geoip', 'ipinfo', 'ipvoid', 'nmap',
                 'sans', 'shodan', 'virustotal', 'threatcrowd', 'passivetotal', 'he', 'otx',
                 'whois'
             ],
