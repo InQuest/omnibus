@@ -10,3 +10,4 @@ censys==0.0.8
 BeautifulSoup==3.2.1
 fuzzyfinder==2.1.0
 dnspython==1.15.0
+Pygments==2.2.0
