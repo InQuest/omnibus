@@ -11,4 +11,4 @@ BeautifulSoup==3.2.1
 fuzzyfinder==2.1.0
 dnspython==1.15.0
 python-Wappalyzer==0.2.2
-pygments==2.2.0
+Pygments==2.2.0
