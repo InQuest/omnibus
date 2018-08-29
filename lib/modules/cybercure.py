@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 ##
-# omnibus - deadbits
-# hacked-emails.com
+# Developed by Alex, Module to implement indicators search functionality in cybercure.ai api
+# 
 ##
 from http import get
 
