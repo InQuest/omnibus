@@ -49,7 +49,7 @@ help_dict = {
         'new', 'cat', 'open', 'source', 'artifacts', 'delete'
     ],
     'modules': [
-        'blockchain', 'clearbit', 'censys', 'csirtg', 'cymon',
+        'blockchain', 'clearbit', 'censys', 'csirtg', 'csirtg', 'cymon',
         'dnsresolve', 'geoip', 'fullcontact', 'hackedemails', 'he', 'hibp',
         'ipinfo', 'ipvoid', 'isc', 'keybase', 'machine', 'nmap', 'passivetotal',
         'pgp', 'rss', 'shodan', 'threatcrowd',
@@ -399,6 +399,12 @@ class Console(cmd2.Cmd):
     def do_csirtg(self, arg):
         """Search CSIRTG for hash information"""
         result = self.dispatch.submit(self.session, 'csirtg', arg)
+        pp_json(result)
+
+
+    def do_cybercure(self, arg):
+        """Check if IP intelligence exists at cybercure.ai"""
+        result = self.dispatch.submit(self.session, 'cybercure', arg)
         pp_json(result)
 
 
