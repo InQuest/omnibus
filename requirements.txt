@@ -3,7 +3,7 @@ cmd2==0.8.9
 threatcrowd==0.4
 cymon==0.1
 redis==2.10.6
-requests==2.7.0
+requests==2.20.0
 ipwhois==1.0.0
 python-whois==0.6.9
 censys==0.0.8
