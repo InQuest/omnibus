@@ -5,15 +5,15 @@
 ##
 import importlib
 
-from common import info
-from common import error
-from common import success
-from common import warning
+from .common import info
+from .common import error
+from .common import success
+from .common import warning
 
-from common import lookup_key
-from common import detect_type
+from .common import lookup_key
+from .common import detect_type
 
-from models import create_artifact
+from .models import create_artifact
 
 
 class Dispatch(object):
@@ -44,9 +44,9 @@ class Dispatch(object):
             ],
         }
 
-
     def machine(self, session, artifact):
         """ Run all modules against an artifact of a given type """
+        modules = []
         is_key, value = lookup_key(session, artifact)
 
         if is_key and value is None:
@@ -77,8 +77,13 @@ class Dispatch(object):
                     if self.db.exists(artifact['type'], {'name': artifact['name']}):
 
                         for child in result['children']:
-                            child_artifact = create_artifact(child['name'], parent=artifact['name'],
-                                _type=child['type'], source=child['source'], subtype=child['subtype'])
+                            child_artifact = create_artifact(
+                                child['name'],
+                                parent=artifact['name'],
+                                _type=child['type'],
+                                source=child['source'],
+                                subtype=child['subtype'],
+                            )
 
                             if not self.db.exists(child['type'], {'name': child['name']}):
                                 self.db.insert_one(child['type'], child_artifact)
@@ -96,7 +101,6 @@ class Dispatch(object):
                 warning('Failed to get module results (%s)' % m)
 
         success('Machine completed')
-
 
     def submit(self, session, module, artifact, no_argument=False):
         """ Run a single module against an artifact """
@@ -135,8 +139,13 @@ class Dispatch(object):
                 if self.db.exists(artifact['type'], {'name': artifact['name']}):
 
                     for child in result['children']:
-                        child_artifact = create_artifact(child['name'], parent=artifact['name'],
-                            _type=child['type'], source=child['source'], subtype=child['subtype'])
+                        child_artifact = create_artifact(
+                            child['name'],
+                            parent=artifact['name'],
+                            _type=child['type'],
+                            source=child['source'],
+                            subtype=child['subtype'],
+                        )
 
                         if not self.db.exists(child['type'], {'name': child['name']}):
                             self.db.insert_one(child['type'], child_artifact)
@@ -155,11 +164,8 @@ class Dispatch(object):
         else:
             warning('Failed to get module results (%s)' % module)
 
-
     def run(self, module, artifact):
         """ Load Python library from modules directory and execute main function """
-        results = None
-
         try:
             ptr = importlib.import_module('lib.modules.%s' % module)
         except Exception as err:

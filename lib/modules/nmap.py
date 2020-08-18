@@ -6,14 +6,14 @@
 from libnmap.process import NmapProcess
 from libnmap.parser import NmapParser
 
-from common import warning
+from ..common import warning
 
 
 class Plugin(object):
+
     def __init__(self, artifact):
         self.artifact = artifact
         self.artifact['data']['nmap'] = None
-
 
     def run(self):
         nm = NmapProcess(targets=str(self.artifact['name']), options='-sT -sV -Pn -T5 -p21,22,23,25,80,6667,1337')

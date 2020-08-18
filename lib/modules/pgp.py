@@ -5,20 +5,19 @@
 ##
 import re
 
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 
-from http import get
-
-from common import re_email
-from common import warning
+from ..common import re_email
+from ..common import warning
+from ..http import get
 
 
 class Plugin(object):
+
     def __init__(self, artifact):
         self.artifact = artifact
         self.artifact['data']['pgp'] = None
         self.headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
-
 
     def fqdn(self):
         url = 'http://pgp.mit.edu/pks/lookup?op=index&search=%s' % self.artifact['name']
@@ -51,7 +50,6 @@ class Plugin(object):
         except Exception as err:
             warning('Caught exception in module (%s)' % str(err))
 
-
     def email(self):
         url = 'http://pgp.mit.edu/pks/lookup?op=index&search=%s' % self.artifact['name']
 
@@ -81,7 +79,6 @@ class Plugin(object):
 
         except Exception as err:
             warning('Caught exception in module (%s)' % str(err))
-
 
     def run(self):
         if self.artifact['type'] == 'email':

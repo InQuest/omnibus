@@ -4,24 +4,24 @@
 # starter data models for host, email, and user artifacts
 ##
 
-from common import is_ipv4
-from common import is_ipv6
-from common import is_fqdn
-from common import is_hash
+from .common import is_ipv4
+from .common import is_ipv6
+from .common import is_fqdn
+from .common import is_hash
 
-from common import warning
-from common import timestamp
-from common import detect_type
+from .common import warning
+from .common import timestamp
+from .common import detect_type
 
 
 artifact_types = ['host', 'email', 'user', 'bitcoin', 'hash']
 
 
 class Artifact(object):
-    def __init__(self, name, type, source=None, subtype=None, case_id=None):
+    def __init__(self, name, type_, source=None, subtype=None, case_id=None):
         self.name = name
         self.created = timestamp()
-        self.type = type
+        self.type = type_
         self.subtype = subtype
         self.source = source
         self.parent = None
@@ -69,7 +69,7 @@ def create_artifact(artifact_name, _type=None, source=None, subtype=None, parent
         warning('Artifact must be one of: email, ipv4, fqdn, user, hash, bitcoin address')
         return None
 
-    created = Artifact(name=artifact_name, type=artifact_type, subtype=subtype, source=source)
+    created = Artifact(name=artifact_name, type_=artifact_type, subtype=subtype, source=source)
 
     if parent is not None:
         created.parent = parent

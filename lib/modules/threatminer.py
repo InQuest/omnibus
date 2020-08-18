@@ -3,18 +3,18 @@
 # omnibus - deadbits.
 # threatminer module
 ##
-from http import get
 
-from common import warning
-from common import detect_type
+from ..common import detect_type
+from ..common import warning
+from ..http import get
 
 
 class Plugin(object):
+
     def __init__(self, artifact):
         self.artifact = artifact
         self.artifact['data']['threatminer'] = None
         self.headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
-
 
     def ip(self):
         url = 'https://api.threatminer.org/v2/host.php?q=%s&rt=2' % self.artifact['name']
@@ -41,7 +41,6 @@ class Plugin(object):
 
         except Exception as err:
             warning('Caught exception in module (%s)' % str(err))
-
 
     def fqdn(self):
         sub_url = 'https://api.threatminer.org/v2/domain.php?q=%s&rt=5' % self.artifact['name']
@@ -93,7 +92,6 @@ class Plugin(object):
         except Exception as err:
             warning('Caught exception in module (%s)' % str(err))
 
-
     def hash(self):
         url = 'https://api.threatminer.org/v2/sample.php?q=%s&rt=3' % self.artifact['name']
 
@@ -143,7 +141,6 @@ class Plugin(object):
         #         "hosts": ["209.222.0.52", "72.32.150.153"]
         #     }]
         # }
-
 
     def run(self):
         if self.artifact['type'] == 'host':

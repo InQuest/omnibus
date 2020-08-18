@@ -3,13 +3,14 @@
 # omnibus - deadbits.
 # ipinfo module
 ##
-from http import get
 
-from common import warning
-from common import get_apikey
+from ..common import get_apikey
+from ..common import warning
+from ..http import get
 
 
 class Plugin(object):
+
     def __init__(self, artifact):
         self.artifact = artifact
         self.artifact['data']['ipinfo'] = None
@@ -17,7 +18,6 @@ class Plugin(object):
         if self.api_key == '':
             raise TypeError('API keys cannot be left blank | set all keys in etc/apikeys.json')
         self.headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
-
 
     def run(self):
         url = 'http://ipinfo.io/%s/json?token=%s' % (self.artifact['name'], self.api_key)

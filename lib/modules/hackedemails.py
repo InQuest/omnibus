@@ -3,16 +3,16 @@
 # omnibus - deadbits
 # hacked-emails.com
 ##
-from http import get
 
-from common import warning
+from ..common import warning
+from ..http import get
 
 
 class Plugin(object):
+
     def __init__(self, artifact):
         self.artifact = artifact
         self.artifact['data']['hackedemails'] = None
-
 
     def run(self):
         url = 'https://hacked-emails.com/api?q=%s' % self.artifact['name']

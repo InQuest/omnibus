@@ -36,7 +36,7 @@ By providing an easy to use interactive command line application, users are able
 
 This project has taken motivation from the greats that came before it such as SpiderFoot, Harpoon, and DataSploit. Much thanks to those great authors for contributing to the world of open source.
 
-The application is written with Python 2.7 in mind and has been successfully tested on OSX and Ubuntu 16.04 environments.
+The application is written with Python 3.6 in mind and has been successfully tested on MacOS.
 
 This is a beta of the final application and as such there may be some bugs or other weirdness during usage. For the most part Omnibus is fully functional and can be used to begin OSINT investigation right away.
 

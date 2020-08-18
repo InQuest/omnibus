@@ -3,13 +3,14 @@
 # omnibus - deadbits.
 # clearbit email lookup module
 ##
-from http import get
 
-from common import warning
-from common import get_apikey
+from ..common import get_apikey
+from ..common import warning
+from ..http import get
 
 
 class Plugin(object):
+
     def __init__(self, artifact):
         self.artifact = artifact
         self.artifact['data']['clearbit'] = None

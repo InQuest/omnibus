@@ -3,18 +3,18 @@
 # omnibus - deadbits.
 # Whois Mind lookup module
 ##
-import BeautifulSoup
+from bs4 import BeautifulSoup
 
-from http import get
-from common import warning
+from ..common import warning
+from ..http import get
 
 
 class Plugin(object):
+
     def __init__(self, artifact):
         self.artifact = artifact
         self.artifact['data']['whoismind'] = []
         self.headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
-
 
     def run(self):
         url = 'http://www.whoismind.com/emails/%s.html' % self.artifact['name']

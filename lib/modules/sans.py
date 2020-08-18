@@ -5,14 +5,14 @@
 ##
 import dshield
 
-from common import warning
+from ..common import warning
 
 
 class Plugin(object):
+
     def __init__(self, artifact):
         self.artifact = artifact
         self.artifact['data']['sans'] = None
-
 
     def run(self):
         try:

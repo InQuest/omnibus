@@ -32,12 +32,12 @@ def post(*args, **kwargs):
         try:
             req = requests.post(*args, **kwargs)
         except:
-            return (False, None)
+            return False, None
 
         if req.status_code == 200:
-            return (True, req)
+            return True, req
         else:
-            return (False, req)
+            return False, req
 
 
 def get(*args, **kwargs):
@@ -52,9 +52,9 @@ def get(*args, **kwargs):
         try:
             req = requests.get(*args, **kwargs)
         except:
-            return (False, None)
+            return False, None
 
         if req.status_code == 200:
-            return (True, req)
+            return True, req
         else:
-            return (False, req)
+            return False, req

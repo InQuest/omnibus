@@ -6,17 +6,18 @@
 
 import dns.resolver
 
-from common import warning
-from common import detect_type
+from ..common import warning
+from ..common import detect_type
 
 
 class Plugin(object):
+
     def __init__(self, artifact):
         self.artifact = artifact
         self.artifact['data']['dnsresolve'] = None
 
-
-    def get_record(self, domain, record):
+    @staticmethod
+    def get_record(domain, record):
         results = []
 
         try:
@@ -31,7 +32,6 @@ class Plugin(object):
             results.append(None)
 
         return results
-
 
     def run(self):
         domain = self.artifact['name']

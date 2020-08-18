@@ -5,13 +5,13 @@
 ##
 from requests.auth import HTTPBasicAuth
 
-from http import get
-
-from common import warning
-from common import get_apikey
+from ..common import get_apikey
+from ..common import warning
+from ..http import get
 
 
 class Plugin(object):
+
     def __init__(self, artifact):
         self.artifact = artifact
         self.artifact['data']['passivetotal'] = None
@@ -19,7 +19,6 @@ class Plugin(object):
         if self.api_key == '':
             raise TypeError('API keys cannot be left blank | set all keys in etc/apikeys.json')
         self.headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
-
 
     def run(self):
         url = 'https://api.passivetotal.org/v2/dns/passive/unique?query=%s' % self.artifact['name']

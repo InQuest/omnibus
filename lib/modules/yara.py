@@ -7,13 +7,14 @@
 import os
 import yara
 
-from common import list_dir
-from common import get_option
+from ..common import list_dir
+from ..common import get_option
 
 CONF = os.path.abspath('../../etc/omnibus.conf')
 
 
 class Plugin(object):
+
     def __init__(self, artifact):
         self.artifact = artifact
         self.artifact['data']['yara'] = None
@@ -25,7 +26,6 @@ class Plugin(object):
         self.rules = os.path.join(CONF, os.path.abspath(cfg_rules))
         if list_dir(self.rules) == 0:
             raise TypeError('Invalid YARA rules directory in conf file: No files contained in directory!')
-
 
     def run(self):
         results = {'matches': {}}

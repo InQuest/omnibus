@@ -3,17 +3,17 @@
 # omnibus - deadbits
 # blockchain.info address lookup
 ##
-from http import get
 
-from common import warning
+from ..common import warning
+from ..http import get
 
 
 class Plugin(object):
+
     def __init__(self, artifact):
         self.artifact = artifact
         self.artifact['data']['blockchain'] = None
         self.headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
-
 
     def run(self):
         url = 'https://blockchain.info/rawaddr/%s' % self.artifact['name']

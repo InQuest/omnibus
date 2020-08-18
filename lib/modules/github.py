@@ -3,16 +3,16 @@
 # omnibus - deadbits
 # search github for active users
 ##
-from http import get
 
-from common import warning
+from ..common import warning
+from ..http import get
 
 
 class Plugin(object):
+
     def __init__(self, artifact):
         self.artifact = artifact
         self.artifact['data']['github'] = None
-
 
     def run(self):
         url = 'https://api.github.com/users/%s' % self.artifact['name']
