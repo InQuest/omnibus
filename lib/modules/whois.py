@@ -3,18 +3,18 @@
 # omnibus - deadbits.
 # whois module
 ##
+
 import whois
-
-from common import warning
-
 from ipwhois import IPWhois
+
+from ..common import warning
 
 
 class Plugin(object):
+
     def __init__(self, artifact):
         self.artifact = artifact
         self.artifact['data']['whois'] = None
-
 
     def ip(self):
         whois_data = IPWhois(self.artifact['name'])
@@ -41,14 +41,12 @@ class Plugin(object):
         except Exception as err:
             warning('Caught unhandled exception: %s' % str(err))
 
-
     def fqdn(self):
         try:
             results = whois.whois(self.artifact['name'])
             self.artifact['data']['whois'] = results
         except:
             pass
-
 
     def run(self):
         if self.artifact['type'] == 'host':

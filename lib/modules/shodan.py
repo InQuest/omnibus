@@ -3,13 +3,14 @@
 # omnibus - deadbits.
 # shodan search
 ##
-from http import get
 
-from common import warning
-from common import get_apikey
+from ..common import get_apikey
+from ..common import warning
+from ..http import get
 
 
 class Plugin(object):
+
     def __init__(self, artifact):
         self.artifact = artifact
         self.artifact['data']['shodan'] = None
@@ -28,7 +29,6 @@ class Plugin(object):
         except Exception as err:
             warning('Caught exception in module (%s)' % str(err))
 
-
     def ip(self):
         url = 'https://api.shodan.io/shodan/host/%s?key=%s' % (self.artifact['name'], self.api_key)
 
@@ -38,7 +38,6 @@ class Plugin(object):
                 self.artifact['data']['shodan'] = response.json()
         except Exception as err:
             warning('Caught exception in module (%s)' % str(err))
-
 
     def run(self):
         if self.artifact['subtype'] == 'ipv4':

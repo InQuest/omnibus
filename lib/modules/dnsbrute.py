@@ -12,11 +12,12 @@ import requests
 from OTXv2 import OTXv2
 import IndicatorTypes
 
-from common import get_apikey
-from common import warning
+from ..common import get_apikey
+from ..common import warning
 
 
 class Plugin(object):
+
     def __init__(self, artifact):
         self.artifact = artifact
         self.artifact['data']['dnsbrute'] = {}
@@ -29,7 +30,6 @@ class Plugin(object):
         self.otx_api_key = get_apikey('otx')
         if self.otx_api_key == '':
             raise TypeError('API keys cannot be left blank | set all keys in etc/apikeys.json')
-
 
     def otx(self):
         otx_server = 'https://otx.alienvault.com/'
@@ -49,7 +49,6 @@ class Plugin(object):
             warning('Caught unknown exception: %s' % str(err))
 
         self.artifact['data']['dnsbrute']['otx'] = domains
-
 
     def vt(self):
         url = 'https://www.virustotal.com/vtapi/v2/domain/report'

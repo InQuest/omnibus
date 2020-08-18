@@ -94,7 +94,6 @@ class Console(cmd2.Cmd):
         if DEBUG:
             self.do_set('debug true')
 
-
     def sigint_handler(self, signum, frame):
         """Ensure Redis DB is cleared before exiting application"""
         pipe_proc = self.pipe_proc
@@ -106,7 +105,6 @@ class Console(cmd2.Cmd):
 
         raise KeyboardInterrupt('Caught keyboard interrupt; quitting ...')
 
-
     def default(self, arg):
         """Override default function for custom error message"""
         if arg.startswith('#'):
@@ -114,7 +112,6 @@ class Console(cmd2.Cmd):
 
         error('Unknown command')
         return
-
 
     def do_quit(self, _):
         """Exit Omnibus shell."""
@@ -127,61 +124,71 @@ class Console(cmd2.Cmd):
         warning('Closing Omnibus shell ...')
         return self._STOP_AND_EXIT
 
-
-    def do_clear(self, arg):
+    @staticmethod
+    def do_clear(arg):
         """Clear the console"""
+        del arg
         os.system('clear')
 
-
-    def do_modules(self, arg):
+    @staticmethod
+    def do_modules(arg):
         """Show module list"""
+        del arg
         bold_msg('[ Modules ]')
         for cmd in help_dict['modules']:
             print(cmd)
 
-
-    def do_artifacts(self, arg):
+    @staticmethod
+    def do_artifacts(arg):
         """Show artifact information and available commands"""
+        del arg
         bold_msg('[ Artifacts ]')
         for cmd in help_dict['artifacts']:
             print(cmd)
 
-
-    def do_general(self, arg):
+    @staticmethod
+    def do_general(arg):
         """Show general commands"""
+        del arg
         bold_msg('[ General Commands ]')
         for cmd in help_dict['general']:
             print(cmd)
 
-
-    def do_sessions(self, arg):
+    @staticmethod
+    def do_sessions(arg):
         """Show session commands"""
+        del arg
         bold_msg('[ Session Commands ]')
         for cmd in help_dict['sessions']:
             print(cmd)
 
-
-    def do_redirect(self, arg):
+    @staticmethod
+    def do_redirect(arg):
         """ Show redirection command help """
-        info('Omnibus supports command redirection to output files using the ">" character. For example, "cat host zeroharbor.org > zh.json" will pipe the output of the cat command to ./zh.json on disk.')
+        del arg
+        info(
+            'Omnibus supports command redirection to output files using the ">" character. For example, "cat host '
+            'zeroharbor.org > zh.json" will pipe the output of the cat command to ./zh.json on disk.'
+        )
 
-
-    def do_banner(self, arg):
+    @staticmethod
+    def do_banner(arg):
         """Display random ascii art banner"""
+        del arg
         print(asciiart.show_banner())
-
 
     def do_session(self, arg):
         """Open a new session"""
+        del arg
         self.session = RedisCache(config)
         if self.session.db is None:
             error('Failed to connect to Redis back-end. Please ensure the Redis service is running')
         else:
             success('Opened new session')
 
-
     def do_ls(self, arg):
         """View current sessions artifacts"""
+        del arg
         if self.session is None:
             warning('No active session')
             return
@@ -194,9 +201,9 @@ class Console(cmd2.Cmd):
             count += 1
         info('Active Artifacts: %d' % count)
 
-
     def do_wipe(self, arg):
         """Clear currently active artifacts """
+        del arg
         if self.session is not None:
             info('Clearing active artifacts from cache ...')
             self.session.flush()
@@ -204,14 +211,13 @@ class Console(cmd2.Cmd):
         else:
             warning('No active session; start a new session by running the "session" command')
 
-
     def do_rm(self, arg):
         """Remove artifact from session by ID
 
         Usage: rm <session id>"""
         try:
             arg = int(arg)
-        except:
+        except TypeError:
             error('Artifact ID must be an integer')
             return
 
@@ -223,7 +229,6 @@ class Console(cmd2.Cmd):
                 warning('Unable to find artifact by ID (%s)' % arg)
         else:
             warning('No active session; start a new session by running the "session" command')
-
 
     def do_new(self, arg):
         """Create a new artifact
@@ -246,12 +251,11 @@ class Console(cmd2.Cmd):
             print('Artifact ID: 1')
         else:
             count = 0
-            for key in self.session.db.scan_iter():
+            for _ in self.session.db.scan_iter():
                 count += 1
             _id = count + 1
             self.session.set(_id, artifact.name)
             print('Artifact ID: %s' % _id)
-
 
     def do_delete(self, arg):
         """Remove artifact from database by name or ID
@@ -271,7 +275,6 @@ class Console(cmd2.Cmd):
         artifact_type = detect_type(arg)
         self.db.delete_one(artifact_type, {'name': arg})
 
-
     def do_cat(self, arg):
         """View artifact details or list API keys
 
@@ -279,7 +282,7 @@ class Console(cmd2.Cmd):
                cat <artifact name>"""
         if arg == 'apikeys':
             data = json.load(open(common.API_CONF, 'rb'))
-            print json.dumps(data, indent=2)
+            print(json.dumps(data, indent=2))
         else:
             is_key, value = lookup_key(self.session, arg)
 
@@ -296,8 +299,7 @@ class Console(cmd2.Cmd):
             if len(result) == 0:
                 info('No entry found for artifact (%s)' % arg)
             else:
-                print json.dumps(result, indent=2, separators=(',', ':'))
-
+                print(json.dumps(result, indent=2, separators=(',', ':')))
 
     def do_open(self, arg):
         """Load text file list of artifacts
@@ -334,7 +336,6 @@ class Console(cmd2.Cmd):
 
         success('Finished loading artifact list')
 
-
     def do_report(self, arg):
         """Save artifact report as JSON file
 
@@ -363,7 +364,6 @@ class Console(cmd2.Cmd):
             else:
                 error('Failed to properly save report')
 
-
     def do_machine(self, arg):
         """Run all modules available for an artifacts type
 
@@ -372,177 +372,146 @@ class Console(cmd2.Cmd):
         result = self.dispatch.machine(self.session, arg)
         pp_json(result)
 
-
     # def do_abusech(self, arg):
     #    """Search Abuse.ch for artifact details """
     #    pass
-
 
     def do_blockchain(self, arg):
         """Search Blockchain.info for BTC address"""
         result = self.dispatch.submit(self.session, 'blockchain', arg)
         pp_json(result)
 
-
     def do_clearbit(self, arg):
         """Search Clearbit for email address """
         result = self.dispatch.submit(self.session, 'clearbit', arg)
         pp_json(result)
-
 
     def do_censys(self, arg):
         """Search Censys for IPv4 address """
         result = self.dispatch.submit(self.session, 'censys', arg)
         pp_json(result)
 
-
     def do_csirtg(self, arg):
         """Search CSIRTG for hash information"""
         result = self.dispatch.submit(self.session, 'csirtg', arg)
         pp_json(result)
-
 
     def do_cybercure(self, arg):
         """Check if IP intelligence exists at cybercure.ai"""
         result = self.dispatch.submit(self.session, 'cybercure', arg)
         pp_json(result)
 
-
     def do_cymon(self, arg):
         """Search Cymon for host """
         result = self.dispatch.submit(self.session, 'cymon', arg)
         pp_json(result)
 
-
     # def do_dnsbrute(self, arg):
     #     """Enumerate DNS subdomains of FQDN """
     #     pass
-
 
     def do_dnsresolve(self, arg):
         """Retrieve DNS records for host """
         result = self.dispatch.submit(self.session, 'dnsresolve', arg)
         pp_json(result)
 
-
     def do_geoip(self, arg):
         """Retrieve Geolocation details for host """
         result = self.dispatch.submit(self.session, 'geoip', arg)
         pp_json(result)
-
 
     def do_fullcontact(self, arg):
         """Search FullContact for email address """
         result = self.dispatch.submit(self.session, 'fullcontact', arg)
         pp_json(result)
 
-
     # def do_gist(self, arg):
     #     """Search Github Gist's for artifact as string """
     #     pass
 
-
     # def do_gitlab(self, arg):
     #     """Check Gitlab for active username """
     #     pass
-
 
     def do_github(self, arg):
         """Check GitHub for active username"""
         result = self.dispatch.submit(self.session, 'github', arg)
         pp_json(result)
 
-
     def do_hackedemails(self, arg):
         """Check hacked-emails.com for email address"""
         result = self.dispatch.submit(self.session, 'hackedemails', arg)
         pp_json(result)
-
 
     def do_he(self, arg):
         """Search Hurricane Electric for host"""
         result = self.dispatch.submit(self.session, 'he', arg)
         pp_json(result)
 
-
     def do_hibp(self, arg):
         """Check HaveIBeenPwned for email address"""
         result = self.dispatch.submit(self.session, 'hibp', arg)
         pp_json(result)
-
 
     def do_ipinfo(self, arg):
         """Retrieve ipinfo resutls for host"""
         result = self.dispatch.submit(self.session, 'ipinfo', arg)
         pp_json(result)
 
-
     def do_ipvoid(self, arg):
         """Search IPVoid for host"""
         result = self.dispatch.submit(self.session, 'ipvoid', arg)
         pp_json(result)
-
 
     def do_isc(self, arg):
         """Search SANS ISC for host"""
         result = self.dispatch.submit(self.session, 'sans', arg)
         pp_json(result)
 
-
     def do_keybase(self, arg):
         """Search Keybase for active username"""
         result = self.dispatch.submit(self.session, 'keybase', arg)
         pp_json(result)
 
-
     def do_monitor(self, arg):
         """Setup active monitors for RSS Feeds, Pastebin, Gist, and other services"""
         pass
 
-
     def do_mdl(self, arg):
         """Search Malware Domain List for host"""
         pass
-
 
     def do_nmap(self, arg):
         """Run NMap discovery scan against host"""
         result = self.dispatch.submit(self.session, 'nmap', arg)
         pp_json(result)
 
-
     def do_otx(self, arg):
         """Search AlienVault OTX for host or hash artifacts"""
         result = self.dispatch.submit(self.session, 'otx', arg)
         pp_json(result)
-
 
     def do_passivetotal(self, arg):
         """Search PassiveTotal for host"""
         result = self.dispatch.submit(self.session, 'passivetotal', arg)
         pp_json(result)
 
-
     def do_pastebin(self, arg):
         """Search Pastebin for artifact as string"""
         pass
-
 
     def do_pgp(self, arg):
         """Search PGP records for email address or user"""
         result = self.dispatch.submit(self.session, 'pgp', arg)
         pp_json(result)
 
-
     # def do_projecthp(self, arg):
     #     """Search Project Honeypot for host"""
     #    pass
 
-
     # def do_reddit(self, arg):
     #     """Search Reddit for active username"""
     #     pass
-
 
     def do_rss(self, arg):
         """Read latest from RSS feed
@@ -551,18 +520,15 @@ class Console(cmd2.Cmd):
         result = self.dispatch.submit(self.session, 'rss', arg, True)
         pp_json(result)
 
-
     # def do_securitynews(self, arg):
     #    """Get current cybersecurity headlines from Google News"""
     #    result = self.dispatch.submit(self.session, 'securitynews', arg, True)
     #    pp_json(result)
 
-
     def do_shodan(self, arg):
         """Query Shodan for host"""
         result = self.dispatch.submit(self.session, 'shodan', arg)
         pp_json(result)
-
 
     def do_source(self, arg):
         """Add source to given artifact or most recently added artifact if not specified
@@ -570,6 +536,7 @@ class Console(cmd2.Cmd):
         Usage: source                            # adds to last created artifact
                source <artifact name|session id> # adds to specific artifact
         """
+        last = ''
         if arg == '':
             last = self.session.receive('artifacts')
             _type = detect_type(last)
@@ -591,40 +558,33 @@ class Console(cmd2.Cmd):
         else:
             warning('Failed to find last artifact in MongoDB. Run "new <artifact name>" before using the source command')
 
-
     def do_threatcrowd(self, arg):
         """Search ThreatCrowd for host"""
         result = self.dispatch.submit(self.session, 'threatcrowd', arg)
         pp_json(result)
 
-
     # def do_totalhash(self, arg):
     #     """Search TotalHash for host"""
     #     pass
-
 
     def do_twitter(self, arg):
         """Get Twitter info for username"""
         result = self.dispatch.submit(self.session, 'twitter', arg)
         pp_json(result)
 
-
     def do_urlvoid(self, arg):
         """Search URLVoid for domain name"""
         result = self.dispatch.submit(self.session, 'urlvoid', arg)
         pp_json(result)
 
-
     # def do_usersearch(self, arg):
     #     """Search Usersearch.com for active usernames"""
     #     pass
-
 
     def do_virustotal(self, arg):
         """Search VirusTotal for IPv4, FQDN, or Hash"""
         result = self.dispatch.submit(self.session, 'virustotal', arg)
         pp_json(result)
-
 
     def do_vxvault(self, arg):
         """Search VXVault for IPv4 or FQDN"""
@@ -634,12 +594,10 @@ class Console(cmd2.Cmd):
         """Fingerprint webserver"""
         pass
 
-
     def do_whois(self, arg):
         """Perform WHOIS lookup on host"""
         result = self.dispatch.submit(self.session, 'whois', arg)
         pp_json(result)
-
 
     def do_whoismind(self, arg):
         """Search Whois Mind for domains associated to an email address"""

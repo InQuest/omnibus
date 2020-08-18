@@ -6,9 +6,9 @@
 
 import pymongo
 
-from common import error
+from .common import error
 
-from common import get_option
+from .common import get_option
 
 
 class Mongo(object):
@@ -25,10 +25,8 @@ class Mongo(object):
         self.db = self.conn['omnibus']
         self.collections = ['email', 'user', 'host', 'hash', 'bitcoin']
 
-
     def use_coll(self, collection):
         return self.db[collection]
-
 
     def get_value(self, collection, query, key):
         """ get value of given key from db query """
@@ -38,7 +36,6 @@ class Mongo(object):
             return None
         return result[key]
 
-
     def exists(self, collection, query):
         coll = self.use_coll(collection)
         result = coll.find_one(query)
@@ -46,11 +43,11 @@ class Mongo(object):
             return False
         return True
 
-
-    def count(self, collection, query={}):
+    def count(self, collection, query=None):
+        if not query:
+            query = {}
         coll = self.use_coll(collection)
         return coll.count(query)
-
 
     def insert_one(self, collection, data):
         if isinstance(data, object):
@@ -67,7 +64,6 @@ class Mongo(object):
 
         return str(doc_id)
 
-
     def update_one(self, collection, query, new_data):
         coll = self.use_coll(collection)
         doc_id = None
@@ -79,7 +75,6 @@ class Mongo(object):
 
         return doc_id
 
-
     def delete_one(self, collection, query):
         coll = self.use_coll(collection)
         try:
@@ -88,11 +83,11 @@ class Mongo(object):
             error('failed to delete documets: %s' % query)
             pass
 
-
-    def find_recent(self, collection, query={}, num_items=25, offset=0):
+    def find_recent(self, collection, query=None, num_items=25, offset=0):
+        if not query:
+            query = {}
         coll = self.use_coll(collection)
         total = self.count(collection, query)
-        result = []
 
         if total < num_items:
             result = list(coll.find(query))
@@ -104,7 +99,6 @@ class Mongo(object):
             result = list(coll.find(query).skip(offset).limit(num_items).sort([('_id', -1)]))
 
         return result
-
 
     def find(self, collection, query, one=False):
         """ return multiple query results as dict or single result as list """

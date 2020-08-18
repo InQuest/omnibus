@@ -8,15 +8,16 @@
 
 from redis import Redis
 
-from common import error
+from .common import error
 
-from common import get_option
+from .common import get_option
 
-from common import utf_decode
-from common import utf_encode
+from .common import utf_decode
+from .common import utf_encode
 
 
 class RedisCache(object):
+
     def __init__(self, config):
         self.host = get_option('redis', 'host', config)
         self.port = int(get_option('redis', 'port', config))
@@ -24,11 +25,9 @@ class RedisCache(object):
         self.ttl = 999999
 
         try:
-            self.db = Redis(db=self.database, host=self.host,
-                port=self.port, socket_timeout=None)
+            self.db = Redis(db=self.database, host=self.host, port=self.port, socket_timeout=None)
         except:
             self.db = None
-
 
     def receive(self, queue_name):
         """ Return most recent message from a given Redis queue"""
@@ -41,7 +40,6 @@ class RedisCache(object):
             error('[redis] failed to receive message from queue %s (error: %s)' % (queue_name, str(err)))
             pass
 
-
     def delete(self, names):
         """ Remove one or more keys by name """
         try:
@@ -49,11 +47,9 @@ class RedisCache(object):
         except Exception as err:
             error('[redis] failed to delete artifacts (error: %s)' % str(err))
 
-
     def exists(self, key):
         """ Check if value exists by key """
         return self.db.exists(key)
-
 
     def get(self, key):
         """ Get a value from redis by key """
@@ -61,7 +57,6 @@ class RedisCache(object):
         if isinstance(retval, bytes):
             return utf_decode(retval)
         return retval
-
 
     def set(self, key, value, ttl=None):
         """ Set a value in cache with optional TTL """
@@ -72,7 +67,6 @@ class RedisCache(object):
         # backward compatibility (Redis v2.2)
         self.db.setnx(key, value)
         self.db.expire(key, ttl)
-
 
     def flush(self):
         """ Flush opened database entirely """

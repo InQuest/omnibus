@@ -5,7 +5,7 @@ import sys
 import json
 import string
 import datetime
-import ConfigParser
+import configparser
 
 from pygments import lexers
 from pygments import highlight
@@ -72,12 +72,15 @@ def pp_json(data):
     if data is None:
         warning('No data returned from module.')
     else:
-        print(highlight(unicode(json.dumps(data, indent=4, default=jsondate), 'UTF-8'),
-            lexers.JsonLexer(), formatters.TerminalFormatter()))
+        print(highlight(
+            json.dumps(data, indent=4, default=jsondate),
+            lexers.JsonLexer(),
+            formatters.TerminalFormatter(),
+        ))
 
 
 def get_option(section, name, conf):
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     if not os.path.exists(conf):
         error('configuration file %s does not exist!' % conf)
         return None
@@ -165,7 +168,7 @@ def mkdir(path):
     else:
         try:
             os.mkdir(path)
-            os.chmod(path, 0777)
+            os.chmod(path, 0x1FF) # 0777 permissions
             return True
         except:
             return False
@@ -177,7 +180,7 @@ def lookup_key(session, artifact):
     valid_key = False
 
     if session is None:
-        return (valid_key, value)
+        return valid_key, value
 
     try:
         artifact = int(artifact)
@@ -186,7 +189,7 @@ def lookup_key(session, artifact):
     except:
         pass
 
-    return (valid_key, value)
+    return valid_key, value
 
 
 def utf_decode(data):
@@ -238,30 +241,29 @@ def is_email(address):
     return bool(re.match(re_email, address))
 
 
-def is_hash(string):
+def is_hash(string_):
     """ Check if string is a valid hash and if so what kind """
-    if re.match(re_md5, string):
+    if re.match(re_md5, string_):
         return 'md5'
-    elif re.match(re_sha1, string):
+    elif re.match(re_sha1, string_):
         return 'sha1'
-    elif re.match(re_sha256, string):
+    elif re.match(re_sha256, string_):
         return 'sha256'
-    elif re.match(re_sha512, string):
+    elif re.match(re_sha512, string_):
         return 'sha512'
     else:
         return False
 
 
-def is_btc_addr(string):
+def is_btc_addr(string_):
     """Check if string is matches as a Bitcoin address.
 
     @note: This does not verify that the string is a VALID BTC address,
     only that it matches the regex pattern of BTC addresses.
     """
-    if re.match(re_btc, string):
+    if re.match(re_btc, string_):
         return 'btc'
     return False
-
 
 
 def detect_type(artifact):

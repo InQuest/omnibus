@@ -3,13 +3,14 @@
 # omnibus - deadbits.
 # urlvoid module - from yolothreat's utilitybelt
 ##
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 
-from http import get
-from common import warning
+from ..common import warning
+from ..http import get
 
 
 class Plugin(object):
+
     def __init__(self, artifact):
         self.artifact = artifact
         self.artifact['data']['urlvoid'] = None
@@ -17,7 +18,6 @@ class Plugin(object):
             'Accept-Encoding': 'gzip, deflate',
             'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'
         }
-
 
     def run(self):
         url = 'http://urlvoid.com/scan/%s/' % self.artifact['name']

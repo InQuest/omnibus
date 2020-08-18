@@ -3,14 +3,15 @@
 # omnibus - deadbits.
 # virustotal module
 ##
-from http import get
 
-from common import warning
-from common import get_apikey
-from common import detect_type
+from ..common import get_apikey
+from ..common import detect_type
+from ..common import warning
+from ..http import get
 
 
 class Plugin(object):
+
     def __init__(self, artifact):
         self.artifact = artifact
         self.artifact['data']['virustotal'] = None
@@ -21,7 +22,6 @@ class Plugin(object):
             'Accept-Encoding': 'gzip, deflate',
             'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'
         }
-
 
     def ip(self):
         parameters = {'ip': self.artifact['name'], 'apikey': self.api_key}
@@ -48,7 +48,6 @@ class Plugin(object):
         except Exception as err:
             warning('Caught exception in module (%s)' % str(err))
 
-
     def fqdn(self):
         parameters = {'domain': self.artifact['name'], 'apikey': self.api_key}
         url = 'https://www.virustotal.com/vtapi/v2/domain/report'
@@ -74,12 +73,9 @@ class Plugin(object):
         except Exception as err:
             warning('Caught exception in module (%s)' % str(err))
 
-
     def hash(self):
         parameters = {'resource': self.artifact['name'], 'apikey': self.api_key}
         url = 'https://www.virustotal.com/vtapi/v2/file/report'
-
-
         try:
             status, response = get(url, params=parameters)
 
@@ -95,7 +91,6 @@ class Plugin(object):
 
         except Exception as err:
             warning('Caught exception in module (%s)' % str(err))
-
 
     def run(self):
         if self.artifact['type'] == 'host':

@@ -3,13 +3,14 @@
 # omnibus - deadbits
 # fullcontact.com
 ##
-from http import get
 
-from common import get_apikey
-from common import warning
+from ..common import get_apikey
+from ..common import warning
+from ..http import get
 
 
 class Plugin(object):
+
     def __init__(self, artifact):
         self.artifact = artifact
         self.artifact['data']['fullcontact'] = None
@@ -21,11 +22,12 @@ class Plugin(object):
             'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'
         }
 
-
     def run(self):
         try:
-            status, response = get('https://api.fullcontact.com/v2/person.json?email=%s' % self.artifact['name'],
-                headers=self.headers)
+            status, response = get(
+                'https://api.fullcontact.com/v2/person.json?email=%s' % self.artifact['name'],
+                headers=self.headers,
+            )
 
             if status:
                 self.artifact['data']['fullcontact'] = response.json()

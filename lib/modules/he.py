@@ -5,18 +5,17 @@
 ##
 import re
 
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 
-from http import get
-
-from common import warning
+from ..common import warning
+from ..http import get
 
 
 class Plugin(object):
+
     def __init__(self, artifact):
         self.artifact = artifact
         self.artifact['data']['he'] = None
-
 
     def ip(self):
         url = 'http://bgp.he.net/ip/%s#_dns' % self.artifact['name']
@@ -35,7 +34,6 @@ class Plugin(object):
         except Exception as err:
             warning('Caught exception in module (%s)' % str(err))
 
-
     def fqdn(self):
         url = 'http://bgp.he.net/dns/%s#_whois' % self.artifact['name']
         headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
@@ -45,13 +43,12 @@ class Plugin(object):
 
             result = []
             if status:
-                pattern = re.compile('\/dns\/.+\".title\=\".+\"\>(.+)<\/a\>', re.IGNORECASE)
+                pattern = re.compile('/dns/.+\".title=\".+\">(.+)</a>', re.IGNORECASE)
                 hosts = re.findall(pattern, response.text)
                 for h in hosts:
                     result.append(h.strip())
         except Exception as err:
             warning('Caught exception in module (%s)' % str(err))
-
 
     def run(self):
         if self.artifact['subtype'] == 'ipv4':

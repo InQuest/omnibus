@@ -5,14 +5,14 @@
 ##
 import threatcrowd
 
-from common import warning
+from ..common import warning
 
 
 class Plugin(object):
+
     def __init__(self, artifact):
         self.artifact = artifact
         self.artifact['data']['threatcrowd'] = None
-
 
     def ip(self):
         try:
@@ -20,13 +20,11 @@ class Plugin(object):
         except Exception as err:
             warning('Caught exception in module (%s)' % str(err))
 
-
     def fqdn(self):
         try:
             self.artifact['data']['threatcrowd'] = threatcrowd.domain_report(self.artifact['name'])
         except Exception as err:
             warning('Caught exception in module (%s)' % str(err))
-
 
     def run(self):
         if self.artifact['subtype'] == 'ipv4':

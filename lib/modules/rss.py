@@ -6,14 +6,14 @@
 
 import feedparser
 
-from common import warning
+from ..common import warning
 
 
 class Plugin(object):
+
     def __init__(self, feed_url):
         self.url = feed_url
         self.results = []
-
 
     def run(self):
         try:
@@ -31,7 +31,6 @@ class Plugin(object):
 
         except Exception as err:
             warning('Caught exception in module (%s)' % str(err))
-
 
 
 def main(artifact):

@@ -1,11 +1,12 @@
-from csirtgsdk.client import Client
+from csirtgsdk.client.http import HTTP
 from csirtgsdk.search import Search
 
-from common import get_apikey
-from common import warning
+from ..common import get_apikey
+from ..common import warning
 
 
 class Plugin(object):
+
     def __init__(self, artifact):
         self.artifact = artifact
         self.artifact['data']['csirtg'] = None
@@ -15,7 +16,7 @@ class Plugin(object):
 
     def run(self):
         try:
-            client = Client(remote='https://csirtg.io/api', token=self.api_key)
+            client = HTTP(remote='https://csirtg.io/api', token=self.api_key)
             search = Search(client)
 
             data = search.search(self.artifact['name'])

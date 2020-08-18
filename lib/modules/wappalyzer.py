@@ -6,10 +6,11 @@
 
 import Wappalyzer
 
-from common import warning
+from ..common import warning
 
 
 class Plugin(object):
+
     def __init__(self, artifact):
         self.artifact = artifact
         if not self.artifact['name'].startwith('https://') or not self.artifact['name'].startwith('http://'):
@@ -18,7 +19,6 @@ class Plugin(object):
             self.artifact['name'] = 'http://' + self.artifact['name']
 
         self.artifact['data']['wappalyzer'] = None
-
 
     def run(self):
         # Everybody hating we just call them skids tho

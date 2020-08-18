@@ -3,17 +3,17 @@
 # omnibus - deadbits.
 # alienvault otx module
 ##
-from http import get
 
-from common import warning
+from ..common import warning
+from ..http import get
 
 
 class Plugin(object):
+
     def __init__(self, artifact):
         self.artifact = artifact
         self.artifact['data']['otx'] = None
         self.headers = {'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
-
 
     def ip(self):
         url = 'https://otx.alienvault.com:443/api/v1/indicators/IPv4/%s/' % self.artifact['name']
@@ -26,7 +26,6 @@ class Plugin(object):
         except Exception as err:
             warning('Caught exception in module (%s)' % str(err))
 
-
     def host(self):
         url = 'https://otx.alienvault.com:443/api/v1/indicators/domain/%s/' % self.artifact['name']
 
@@ -38,7 +37,6 @@ class Plugin(object):
         except Exception as err:
             warning('Caught exception in module (%s)' % str(err))
 
-
     def hash(self):
         url = 'https://otx.alienvault.com:443/api/v1/indicators/file/%s/' % self.artifact['name']
 
@@ -49,7 +47,6 @@ class Plugin(object):
                 self.artifact['data']['otx'] = response.json()
         except Exception as err:
             warning('Caught exception in module (%s)' % str(err))
-
 
     def run(self):
         if self.artifact['type'] == 'host':

@@ -6,14 +6,15 @@
 import os
 import json
 
-from common import timestamp
+from .common import timestamp
 
-from common import error
-from common import success
-from common import warning
+from .common import error
+from .common import success
+from .common import warning
 
 
 class JSON(object):
+
     def __init__(self, data, file_path=None, file_name='report.json', create=True):
         self.data = data
         self.file_path = None
@@ -26,7 +27,6 @@ class JSON(object):
         if file_path:
             self.set_filepath(file_path, file_name, create)
 
-
     def set_filepath(self, file_path, file_name, create=True):
         if os.path.isdir(file_path):
             self.file_path = os.path.join(file_path, file_name)
@@ -37,7 +37,6 @@ class JSON(object):
         else:
             error('unable to find directory %s - cannot save report' % file_path)
             return False
-
 
     def save(self):
         if self.file_path:

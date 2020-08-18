@@ -3,10 +3,10 @@
 # omnibus - deadbits.
 # geolocation for hosts
 ##
-from http import get
 
-from common import get_apikey
-from common import warning
+from ..common import get_apikey
+from ..common import warning
+from ..http import get
 
 
 class Plugin(object):
@@ -19,7 +19,6 @@ class Plugin(object):
         self.headers = {
             'Accept-Encoding': 'gzip, deflate',
             'User-Agent': 'OSINT Omnibus (https://github.com/InQuest/Omnibus)'}
-
 
     def run(self):
         url = 'http://api.ipstack.com/%s?access_key=%s&hostname=1' % (self.artifact['name'], self.api_key)
