@@ -2,7 +2,7 @@ pymongo==3.5.1
 cmd2==0.8.9
 threatcrowd==0.4
 cymon==0.1
-redis==2.10.6
+redis==4.5.3
 requests==2.20.0
 ipwhois==1.0.0
 python-whois==0.6.9
